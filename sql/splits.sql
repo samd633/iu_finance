@@ -1,0 +1,1 @@
+SELECT * FROM [dbo].[share_split]

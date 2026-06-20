@@ -1,0 +1,7 @@
+# Local secrets / config
+db_config.ini
+
+# Caches
+yfinance_cache.sqlite
+__pycache__/
+*.pyc
