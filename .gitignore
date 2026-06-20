@@ -1,5 +1,6 @@
 # Local secrets / config
 db_config.ini
+fmp_key.txt
 
 # Caches
 yfinance_cache.sqlite

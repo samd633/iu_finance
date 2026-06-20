@@ -1,0 +1,7 @@
+Tickers for Test:
+
+MSFT
+NVDA
+AAPL
+COST
+LLY
