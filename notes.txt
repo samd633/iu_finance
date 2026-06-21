@@ -5,3 +5,6 @@ NVDA
 AAPL
 COST
 LLY
+
+To Do:
+    Calculate op cashflow / share over time

@@ -62,14 +62,28 @@ class Fin_Metrics:
         df = EPS_Deviation.compute(df, "eps_diluted")
         df = TotalReturn.compute(df, prices, self.fmp.get_dividends())
 
-        cols = ["fiscalYear", "date", "eps_diluted", "rev_per_share",
-                "eps_diluted_cagr_3y", "eps_diluted_cagr_5y",
-                "rev_per_share_cagr_3y", "rev_per_share_cagr_5y",
-                "eps_diluted_std_dev", "eps_diluted_downside_dev",
-                "roce", "roce_avg_3y", "roce_avg_5y",
-                "ebitda_margin", "ebitda_margin_avg_3y", "ebitda_margin_avg_5y",
+
+        # All cols:
+        # cols = ["fiscalYear", "date", "eps_diluted", "rev_per_share",
+        #         "eps_diluted_cagr_3y", "eps_diluted_cagr_5y",
+        #         "rev_per_share_cagr_3y", "rev_per_share_cagr_5y",
+        #         "eps_diluted_std_dev", "eps_diluted_downside_dev",
+        #         "roce", "roce_avg_3y", "roce_avg_5y",
+        #         "ebitda_margin", "ebitda_margin_avg_3y", "ebitda_margin_avg_5y",
+        #         "price_to_cfo", "price_to_earnings", "price_to_book",
+        #         "total_return_12m", "total_return_24m"]
+
+        # Calculate op cashflow / share over time
+
+        cols = ["fiscalYear", "eps_diluted", "rev_per_share",
+                "eps_diluted_cagr_3y",
+                "rev_per_share_cagr_3y",
+                "eps_diluted_std_dev",
+                "roce", "roce_avg_3y",
+                "ebitda_margin", "ebitda_margin_avg_3y",
                 "price_to_cfo", "price_to_earnings", "price_to_book",
                 "total_return_12m", "total_return_24m"]
+
         return df[cols].rename(columns={"fiscalYear": "fiscal_year"})
 
     def main(self):
@@ -79,5 +93,6 @@ class Fin_Metrics:
 
 
 if __name__ == "__main__":
-    fmp = FMP_Financial("GE", n=15)
+    ticker = input("Enter ticker: ").strip().upper()
+    fmp = FMP_Financial(ticker, n=15)
     Fin_Metrics(fmp).main()
