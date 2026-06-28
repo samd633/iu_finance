@@ -205,6 +205,7 @@ class SP_Sector:
                 "revenue": inc.get("revenue"),
                 "shares": inc.get("weightedAverageShsOutDil"),
                 "ebitda": inc.get("ebitda"),
+                "eps_diluted": inc.get("epsDiluted"),
                 "ni_common": ni_common,
                 "avg_common_equity": avg_ceq,
             })
@@ -296,13 +297,59 @@ class SP_Sector:
         
         return ts[cols]
 
+    def get_sector_year_detail(self, sector: str = "Technology", n: int = 10,
+                               coverage: float = 0.90) -> tuple[int, pd.DataFrame]:
+        """
+        Per-company financials for the single most recent full-coverage year of
+        the sector time series -- same year and same source data as
+        get_sector_growth, so the stock detail reconciles with the aggregate.
+        Returns (fiscal_year, DataFrame) where the frame holds:
+            ticker, company_name, market_cap, weight_pct,
+            eps_diluted, rev_per_share, ebitda_margin, roce
+        market_cap / weight_pct are current (point-in-time); the financials are
+        for the most recent full year. Sorted largest-to-smallest by market cap.
+        """
+        members = self.get_sector_df()
+        members = members[members["sector"] == sector][["ticker", "company_name"]]
+
+        rows = []
+        for ticker in members["ticker"]:
+            rows.extend(self._company_year_components(ticker, n))
+        long = pd.DataFrame(rows).dropna(subset=["net_income", "revenue", "shares"])
+
+        # Most recent year clearing the same coverage filter as the time series.
+        counts = long.groupby("fiscal_year")["ticker"].nunique()
+        valid = counts[counts >= coverage * counts.max()]
+        year = int(valid.index.max())
+
+        detail = long[long["fiscal_year"] == year].merge(members, on="ticker", how="left")
+        detail["market_cap"] = detail["ticker"].apply(self._fetch_market_cap)
+        detail["market_cap"] = round(detail["market_cap"] / 1_000_000, 2)
+        detail["weight_pct"] = (detail["market_cap"] / detail["market_cap"].sum() * 100).round(2)
+        detail["rev_per_share"] = (detail["revenue"] / detail["shares"]).round(2)
+        detail["ebitda_margin"] = (detail["ebitda"] / detail["revenue"].replace(0, np.nan)).round(4)
+        detail["roce"]          = (detail["ni_common"] / detail["avg_common_equity"].replace(0, np.nan)).round(4)
+
+        cols = ["ticker", "company_name", "market_cap", "weight_pct",
+                "eps_diluted", "rev_per_share", "ebitda_margin", "roce"]
+        detail = detail.sort_values("market_cap", ascending=False)[cols].reset_index(drop=True)
+        detail = detail.rename(columns={'market_cap': 'market_cap (MM)'})
+        return year, detail
+
     # ------------------------------------------------------------------
 
-    def main(self, sector: str = "Technology"):
-        print(f"{sector} — consolidated per-share growth")
+    def main(self, sector: str = "Healthcare"):
+        print(f"{sector} — Sector-Level Historic Metrics")
         print("=" * 70)
         print(self.get_sector_growth(sector).to_string(index=False))
+
+        year, detail = self.get_sector_year_detail(sector)
+        print()
+        print(f"{sector} — Stock-Level Detail (FY{year})")
+        print("=" * 70)
+        print(detail.to_string(index=False))
 
 
 if __name__ == "__main__":
     SP_Sector().main()
+
