@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(curl -s https://financialmodelingprep.com/stable/sp500-constituent?apikey=__CMDSUB_OUTPUT__)",
+      "Bash(git check-ignore *)",
+      "Bash(curl -s -o /tmp/sp.json -w '%{http_code}\\\\n' https://financialmodelingprep.com/stable/sp500-constituent?apikey=__CMDSUB_OUTPUT__)",
+      "Read(//tmp/**)",
+      "Bash(curl -s 'https://financialmodelingprep.com/stable/profile?symbol=AAPL&apikey=__CMDSUB_OUTPUT__')",
+      "Bash(curl -s -o /tmp/s.json -w '%{http_code}' https://financialmodelingprep.com/stable/available-sectors?apikey=__CMDSUB_OUTPUT__)",
+      "WebFetch(domain:investor.vanguard.com)",
+      "Bash(curl -sS -o /tmp/v.json -w \"HTTP %{http_code}\\\\n\" -H \"User-Agent: Mozilla/5.0\" \"https://investor.vanguard.com/investment-products/etfs/profile/api/0968/portfolio-holding/stock\")",
+      "Bash(curl -sS --ssl-no-revoke -H 'User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\)' -H 'Accept: application/json' -H 'Referer: https://investor.vanguard.com/investment-products/etfs/profile/voo' 'https://investor.vanguard.com/investment-products/etfs/profile/api/0968/portfolio-holding/stock?start=1&count=500' -o /tmp/v1.json -w 'p1 HTTP %{http_code} bytes %{size_download}\\\\n')",
+      "Bash(curl -sS --ssl-no-revoke -H 'User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\)' -H 'Accept: application/json' -H 'Referer: https://investor.vanguard.com/investment-products/etfs/profile/voo' 'https://investor.vanguard.com/investment-products/etfs/profile/api/0968/portfolio-holding/stock?start=501&count=500' -o /tmp/v2.json -w 'p2 HTTP %{http_code} bytes %{size_download}\\\\n')",
+      "Bash(curl -sS --ssl-no-revoke -H 'User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\)' -H 'Accept: application/json' -H 'Referer: https://investor.vanguard.com/investment-products/etfs/profile/voo' 'https://investor.vanguard.com/investment-products/etfs/profile/api/0968/portfolio-holding/stock?start=1&count=500' -o ./_voo1.json)",
+      "Bash(curl -sS --ssl-no-revoke -H 'User-Agent: Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\)' -H 'Accept: application/json' -H 'Referer: https://investor.vanguard.com/investment-products/etfs/profile/voo' 'https://investor.vanguard.com/investment-products/etfs/profile/api/0968/portfolio-holding/stock?start=501&count=500' -o ./_voo2.json)"
     ]
   }
 }
