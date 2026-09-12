@@ -3,11 +3,11 @@ Metric calculations built on top of FMP_Financial data.
 All derived metrics live here; FMP_Financial only fetches raw data.
 """
 import pandas as pd
-from fmp_fin import FMP_Financial
-from cagr import CAGR
-from rolling_avg import RollingAvg
-from eps_deviation import EPS_Deviation
-from total_return import TotalReturn
+from old.fmp_fin import FMP_Financial
+from old.cagr import CAGR
+from old.rolling_avg import RollingAvg
+from old.eps_deviation import EPS_Deviation
+from old.total_return import TotalReturn
 
 
 class Fin_Metrics:

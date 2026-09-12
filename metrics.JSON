@@ -1,0 +1,247 @@
+{
+    "Metrics":{
+        "Growth":{
+            "Sust_G_Rate":{
+                "Description":"Sustainable Growth Rate",
+                "Formula":"(ROE / 100) * (Ret_Ratio / 100) / (1 - (ROE / 100) * (Ret_Ratio / 100)) * 100",
+                "Rounding":"3"
+                },
+            "Int_G_Rate":{
+                "Description":"Internal Growth Rate",
+                "Formula":"(ROA / 100) * (Ret_Ratio / 100) / (1 - (ROA / 100) * (Ret_Ratio / 100)) * 100",
+                "Rounding":"3"
+                },
+            "EPS_Growth_1Yr":{
+                "Description":"Earnings Per Share Growth",
+                "Formula":"(EPS.0 - EPS.1) / EPS.1 * 100",
+                "Rounding":"3"
+                },
+            "SPS_Growth_1Yr":{
+                "Description":"Sales Per Share Growth",
+                "Formula":"(SPS.0 - SPS.1) / SPS.1 * 100",
+                "Rounding":"3"
+                },
+            "EPS_CAGR_3Yr":{
+                "Description":"Earnings Per Share 3-Year CAGR",
+                "Formula":"((EPS.0 / EPS.3) ** (1/3) - 1) * 100",
+                "Rounding":"3"
+                },
+            "EPS_CAGR_5Yr":{
+                "Description":"Earnings Per Share 5-Year CAGR",
+                "Formula":"((EPS.0 / EPS.5) ** (1/5) - 1) * 100",
+                "Rounding":"3"
+                },
+            "SPS_CAGR_3Yr":{
+                "Description":"Sales Per Share 3-Year CAGR",
+                "Formula":"((SPS.0 / SPS.3) ** (1/3) - 1) * 100",
+                "Rounding":"3"
+                },
+            "SPS_CAGR_5Yr":{
+                "Description":"Sales Per Share 5-Year CAGR",
+                "Formula":"((SPS.0 / SPS.5) ** (1/5) - 1) * 100",
+                "Rounding":"3"
+                },
+            "Inv_Rate":{
+                "Description":"Rate of Fixed Investment",
+                "Formula":"CapX / REV * 100",
+                "Rounding":"3"
+                },
+            "Asset_G_Rate":{
+                "Description":"Rate of Fixed Asset Growth",
+                "Formula":"Net_CapX / PPE * 100",
+                "Rounding":"3"
+                }
+            }
+        },
+    "Fields":{
+        "ASSETS":{
+            "Description":"Total Assets",
+            "Source":"BS",
+            "API":"totalAssets",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "AVG_ASSETS":{
+            "Description":"Average Total Assets",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"(ASSETS.0 + ASSETS.1) / 2",
+            "Rounding":"None"
+        },
+        "EQUITY":{
+            "Description":"Total Shareholder Equity",
+            "Source":"BS",
+            "API":"totalStockholdersEquity",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "PREF":{
+            "Description":"Preferred Equity",
+            "Source":"BS",
+            "API":"preferredStock",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "COMM":{
+            "Description":"Common Equity",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"EQUITY - PREF",
+            "Rounding":"None"
+        },
+        "AVG_COMM":{
+            "Description":"Average Common Equity",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"(COMM.0 + COMM.1) / 2",
+            "Rounding":"None"
+        },
+        "SHARES":{
+            "Description":"Shares Outstanding",
+            "Source":"IS",
+            "API":"weightedAverageShsOutDil",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "BVPS":{
+            "Description":"Book Value Per Share",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"EQUITY / SHARES",
+            "Rounding":"3"
+        },
+        "REV":{
+            "Description":"Revenue",
+            "Source":"IS",
+            "API":"revenue",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "CFO":{
+            "Description":"Cash Flow from Operations",
+            "Source":"CF",
+            "API":"operatingCashFlow",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "CFOPS":{
+            "Description":"Cash Flow from Operations per Share",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"CFO / SHARES",
+            "Rounding":"3"
+        },
+        "EARN":{
+            "Description":"Earnings",
+            "Source":"IS",
+            "API":"netIncome",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "Pref_DIV":{
+            "Description":"Preferred Dividends",
+            "Source":"CF",
+            "API":"preferredDividendsPaid",
+            "Formula":"/ -1_000_000",
+            "Rounding":"None"
+        },
+        "Comm_DIV":{
+            "Description":"Dividends Paid",
+            "Source":"CF",
+            "API":"commonDividendsPaid",
+            "Formula":"/ -1_000_000",
+            "Rounding":"None"
+        },
+        "EARN_Comm":{
+            "Description":"Earnings to Common",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"EARN - Pref_DIV",
+            "Rounding":"None"
+        },
+        "EPS":{
+            "Description":"Earnings Per Share Diluted",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"EARN_Comm / SHARES",
+            "Rounding":"3"
+        },
+        "SPS":{
+            "Description":"Sales Per Share",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"REV / SHARES",
+            "Rounding":"3"
+        },
+        "ROE":{
+            "Description":"Return on Equity",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"EARN_Comm / AVG_COMM * 100",
+            "Rounding":"3"
+        },
+        "ROA":{
+            "Description":"Return on Assets",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"EARN / AVG_ASSETS * 100",
+            "Rounding":"3"
+        },
+        "EBITDA":{
+            "Description":"Earnings Before Interest, Taxes, Depreciation and Amortization",
+            "Source":"IS",
+            "API":"ebitda",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "EBITDA_MGN":{
+            "Description":"EBITDA Margin",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"EBITDA / REV * 100",
+            "Rounding":"3"
+        },
+        "PAY_Ratio":{
+            "Description":"Dividend Payout Ratio",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"Comm_DIV / EARN_Comm * 100",
+            "Rounding":"3"
+        },
+        "Ret_Ratio":{
+            "Description":"Dividend Retention Ratio",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"1 - PAY_Ratio / 100",
+            "Rounding":"3"
+        },
+        "CapX":{
+            "Description":"Capital Expenditures",
+            "Source":"CF",
+            "API":"capitalExpenditure",
+            "Formula":"/ -1_000_000",
+            "Rounding":"None"
+        },
+        "DepAmort":{
+            "Description":"Depreciation & Amortization",
+            "Source":"CF",
+            "API":"depreciationAndAmortization",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "Net_CapX":{
+            "Description":"Net Capital Expenditures",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"CapX - DepAmort",
+            "Rounding":"None"
+        },
+        "PPE":{
+            "Description":"Property, Plant & Equipment",
+            "Source":"BS",
+            "API":"propertyPlantEquipmentNet",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        }
+    }
+}

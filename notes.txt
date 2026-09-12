@@ -1,10 +1,51 @@
-Tickers for Test:
+### MSCI Methodology ###
 
-MSFT
-NVDA
-AAPL
-COST
-LLY
+Growth Factor:
+    - LT Fwd EPS Growth
+    - ST Fwd EPS Growth
+    - Internal Growth Rate
+    - LT Hist EPS Growth
+    - LT Hist SPS Growth
 
-To Do:
-    Calculate op cashflow / share over time
+Value Factor:
+    - Fwd P/E
+    - EV / CFO
+    - P/B
+
+Quality:
+    - RoE
+    - Debt / Equity
+    - Earnings Variability
+
+### Metrics for Backtesting ###
+
+Growth Factor:
+    - Internal Growth Rate
+    - Sust. Growth Rate
+    - Hist EPS Growth (Varying time frame - 3/5 Yr)
+    - Hist SPS Growth (Varying time frame - 3/5 Yr)
+    - Investment / Assets
+    - Fwd EPS Growth (if possible)
+
+Value Factor:
+    - Fwd P/E
+    - EV / CFO
+    - EV / EBITDA
+    - P/B
+    - Industry Normalized P/E
+
+Quality:
+    - RoE (1Yr/3Yr/5Yr)
+    - Return on Invested Capital (1Yr/3Yr/5Yr)
+    - EBITDA Margin
+    - Gross Margin
+    - Debt / Equity
+    - Earnings Variability
+
+Momentum:
+    - 6M Total Return
+    - 12M Total Return
+
+Revisions:
+    - Price Target Change (3M/6M)
+    - 1M EPS Revision

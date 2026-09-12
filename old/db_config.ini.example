@@ -1,7 +1,0 @@
-; Copy this file to db_config.ini (which is gitignored) and fill in real values.
-[azure_sql]
-server = YOUR_SERVER.database.windows.net
-database = YOUR_DATABASE
-username = YOUR_USERNAME
-password = YOUR_PASSWORD
-driver = ODBC Driver 18 for SQL Server
