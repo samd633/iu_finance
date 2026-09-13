@@ -36,7 +36,7 @@ Value Factor:
 
 Quality:
     - RoE (1Yr/3Yr/5Yr)
-    - Return on Invested Capital (1Yr/3Yr/5Yr)
+    - Return on Invested Capital (1Yr/3Yr/5Yr) ??
     - EBITDA Margin
     - Gross Margin
     - Debt / Equity

@@ -41,6 +41,16 @@
                 "Formula":"((SPS.0 / SPS.5) ** (1/5) - 1) * 100",
                 "Rounding":"3"
                 },
+            "CFOPS_CAGR_3Yr":{
+                "Description":"Cash Flow from Operations 3-Year CAGR",
+                "Formula":"((CFOPS.0 / CFOPS.3) ** (1/3) - 1) * 100",
+                "Rounding":"3"
+                },
+            "CFOPS_CAGR_5Yr":{
+                "Description":"Cash Flow from Operations 5-Year CAGR",
+                "Formula":"((CFOPS.0 / CFOPS.5) ** (1/5) - 1) * 100",
+                "Rounding":"3"
+                },
             "Inv_Rate":{
                 "Description":"Rate of Fixed Investment",
                 "Formula":"CapX / REV * 100",
@@ -51,6 +61,107 @@
                 "Formula":"Net_CapX / PPE * 100",
                 "Rounding":"3"
                 }
+            },
+        "Value":{
+            "P_E":{
+                "Description":"Price to Earnings Ratio",
+                "Formula":"Price / EPS",
+                "Rounding":"3"
+                },
+            "P_S":{
+                "Description":"Price to Sales Ratio",
+                "Formula":"Price / SPS",
+                "Rounding":"3"
+                },
+            "P_B":{
+                "Description":"Price to Book Value Ratio",
+                "Formula":"Price / BVPS",
+                "Rounding":"3"
+                },
+            "P_CFO":{
+                "Description":"Price to Cash Flow from Operations Ratio",
+                "Formula":"Price / CFOPS",
+                "Rounding":"3"
+                },
+            "EV_EBITDA":{
+                "Description":"Enterprise Value to EBITDA Ratio",
+                "Formula":"EV / EBITDA",
+                "Rounding":"3"
+                },
+            "EV_CFO":{
+                "Description":"Enterprise Value to Cash Flow from Operations Ratio",
+                "Formula":"EV / CFO",
+                "Rounding":"3"
+                }
+            },
+        "Quality":{
+            "ROE":{
+                "Description":"Return on Equity",
+                "Formula":"EARN_Comm / AVG_COMM * 100",
+                "Rounding":"3"
+                },
+            "ROE_3Yr":{
+                "Description":"Return on Equity 3-Year Average",
+                "Formula":"(ROE.0 + ROE.1 + ROE.2) / 3",
+                "Rounding":"3"
+                },
+            "ROE_5Yr":{
+                "Description":"Return on Equity 5-Year Average",
+                "Formula":"(ROE.0 + ROE.1 + ROE.2 + ROE.3 + ROE.4) / 5",
+                "Rounding":"3"
+                },
+            "EBITDA_MGN":{
+                "Description":"EBITDA Margin",
+                "Formula":"EBITDA / REV * 100",
+                "Rounding":"3"
+                },
+            "EBITDA_MGN_3Yr":{
+                "Description":"EBITDA Margin 3-Year Average",
+                "Formula":"(EBITDA_MGN.0 + EBITDA_MGN.1 + EBITDA_MGN.2) / 3",
+                "Rounding":"3"
+                },
+            "EBITDA_MGN_5Yr":{
+                "Description":"EBITDA Margin 5-Year Average",
+                "Formula":"(EBITDA_MGN.0 + EBITDA_MGN.1 + EBITDA_MGN.2 + EBITDA_MGN.3 + EBITDA_MGN.4) / 5",
+                "Rounding":"3"
+                },
+            "CFO_MGN":{
+                "Description":"Cash Flow from Operations Margin",
+                "Formula":"CFO / REV * 100",
+                "Rounding":"3"
+                },
+            "CFO_MGN_3Yr":{
+                "Description":"Cash Flow from Operations Margin 3-Year Average",
+                "Formula":"(CFO_MGN.0 + CFO_MGN.1 + CFO_MGN.2) / 3",
+                "Rounding":"3"
+                },
+            "CFO_MGN_5Yr":{
+                "Description":"Cash Flow from Operations Margin 5-Year Average",
+                "Formula":"(CFO_MGN.0 + CFO_MGN.1 + CFO_MGN.2 + CFO_MGN.3 + CFO_MGN.4) / 5",
+                "Rounding":"3"
+                },
+            "DEBT_EQ":{
+                "Description":"Debt to Equity Ratio",
+                "Formula":"TOT_DEBT / EQUITY * 100",
+                "Rounding":"3"
+                },
+            "EPS_5Yr_Var":{
+                "Description":"Earnings Per Share 5-Year Variance",
+                "Formula":"STDV(EPS.0, EPS.1, EPS.2, EPS.3, EPS.4) * 100",
+                "Rounding":"3"
+                }
+            },
+            "Momentum":{
+                "6M_Return":{
+                    "Description":"6-Month Price Return",
+                    "Formula":"(Price - Price_6M_Ago) / Price_6M_Ago * 100",
+                    "Rounding":"3"
+                    },
+                "12M_Return":{
+                    "Description":"12-Month Price Return",
+                    "Formula":"(Price - Price_12M_Ago) / Price_12M_Ago * 100",
+                    "Rounding":"3"
+                    }
             }
         },
     "Fields":{
@@ -201,6 +312,13 @@
             "Formula":"EBITDA / REV * 100",
             "Rounding":"3"
         },
+        "CFO_MGN":{
+            "Description":"Cash Flow from Operations Margin",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"CFO / REV * 100",
+            "Rounding":"3"
+        },
         "PAY_Ratio":{
             "Description":"Dividend Payout Ratio",
             "Source":"Formula",
@@ -241,6 +359,83 @@
             "Source":"BS",
             "API":"propertyPlantEquipmentNet",
             "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "Price":{
+            "Description":"Average Close Price, 3 Trading Days Following Filing Date",
+            "Source":"Price",
+            "API":"None",
+            "Formula":"None",
+            "Rounding":"3"
+        },
+        "Price_6M_Ago":{
+            "Description":"Close Price ~6 Months Before Filing Date",
+            "Source":"PriceLookback",
+            "API":"6",
+            "Formula":"None",
+            "Rounding":"3"
+        },
+        "Price_12M_Ago":{
+            "Description":"Close Price ~12 Months Before Filing Date",
+            "Source":"PriceLookback",
+            "API":"12",
+            "Formula":"None",
+            "Rounding":"3"
+        },
+        "MKT_CAP":{
+            "Description":"Market Capitalization",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"Price * SHARES",
+            "Rounding":"None"
+        },
+        "NET_DEBT":{
+            "Description":"Total Debt less Cash & Cash Equivalents",
+            "Source":"BS",
+            "API":"netDebt",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "TOT_DEBT":{
+            "Description":"Total Debt",
+            "Source":"BS",
+            "API":"totalDebt",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "MINORITY_INT":{
+            "Description":"Minority Interest",
+            "Source":"BS",
+            "API":"minorityInterest",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "EV":{
+            "Description":"Enterprise Value",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"MKT_CAP + NET_DEBT + PREF + MINORITY_INT",
+            "Rounding":"None"
+        },
+        "COMM_STOCK":{
+            "Description":"Common Stock",
+            "Source":"BS",
+            "API":"commonStock",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "APIC":{
+            "Description":"Additional Paid-In Capital",
+            "Source":"BS",
+            "API":"additionalPaidInCapital",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "INV_CAP":{
+            "Description":"Invested Capital (Common Stock)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"COMM_STOCK + APIC",
             "Rounding":"None"
         }
     }

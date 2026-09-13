@@ -17,6 +17,13 @@ with open("metrics.JSON") as f:
     METRICS_CFG = json.load(f)
 
 
+_FORMULA_FUNCS = {
+    # Row-wise (per report date) sample standard deviation across N shifted values,
+    # e.g. STDV(EPS.0, EPS.1, EPS.2, EPS.3, EPS.4) for a trailing 5-period variance.
+    "STDV": lambda *series: pd.concat(series, axis=1).std(axis=1),
+}
+
+
 def _eval_formula(formula: str, df: pd.DataFrame) -> pd.Series:
     """Evaluate a metrics.JSON formula against a DataFrame of named field columns.
 
@@ -34,7 +41,7 @@ def _eval_formula(formula: str, df: pd.DataFrame) -> pd.Series:
         return f'__df["{name}"].shift({shift})'
 
     transformed = re.sub(r'\b([A-Za-z_][A-Za-z0-9_]*)(?:\.(\d+))?', replacer, formula)
-    return eval(transformed, {"__df": df})
+    return eval(transformed, {"__df": df, **_FORMULA_FUNCS})
 
 
 class FMP_Financial:
@@ -48,7 +55,9 @@ class FMP_Financial:
         self._income_stmt   = None
         self._balance_sheet = None
         self._cash_flow     = None
+        self._daily_prices  = None
         self._prices        = None
+        self._lookback_prices = {}
 
     def _fetch(self, endpoint: str, **extra_params) -> list[dict]:
         resp = requests.get(
@@ -75,21 +84,65 @@ class FMP_Financial:
             self._cash_flow = self._fetch("cash-flow-statement", limit=self.n + 5)
         return self._cash_flow
 
-    def _get_prices(self) -> pd.Series:
-        if self._prices is None:
-            dates = sorted(item["date"] for item in self._get_income_stmt())
-            start = (pd.Timestamp(dates[0]) - pd.DateOffset(days=7)).strftime("%Y-%m-%d")
+    def _get_filings(self) -> list[tuple[pd.Timestamp, pd.Timestamp]]:
+        """(period-end date, SEC filing date) pairs, one per income-statement period."""
+        return sorted(
+            (pd.Timestamp(item["date"]), pd.Timestamp(item["filingDate"]))
+            for item in self._get_income_stmt()
+        )
+
+    def _get_daily_prices(self) -> pd.Series:
+        """Daily close prices spanning from 12 months before the earliest filing
+        date through the 3-day post-filing window after the latest — far enough
+        back to cover the 12-month momentum lookback for every period.
+        """
+        if self._daily_prices is None:
+            filings = self._get_filings()
+            start = (filings[0][1] - pd.DateOffset(months=12, days=10)).strftime("%Y-%m-%d")
+            end = (filings[-1][1] + pd.DateOffset(days=10)).strftime("%Y-%m-%d")
             resp = requests.get(
                 f"{FMP_BASE}/historical-price-eod/full",
                 params={"symbol": self.ticker, "from": start,
-                        "to": dates[-1], "apikey": API_KEY},
+                        "to": end, "apikey": API_KEY},
             )
             resp.raise_for_status()
             records = resp.json()
-            self._prices = pd.Series(
+            self._daily_prices = pd.Series(
                 {pd.Timestamp(r["date"]): r["close"] for r in records}
             ).sort_index()
+        return self._daily_prices
+
+    def _get_prices(self) -> pd.Series:
+        """Average close price over the 3 trading days on/after each period's SEC
+        filing date (not the fiscal period-end date), indexed by period-end date.
+
+        The filing date is when financials actually become public, so pricing off
+        it avoids look-ahead bias; averaging a few days past it smooths the
+        immediate earnings-reaction jump rather than pricing off a single day.
+        """
+        if self._prices is None:
+            daily = self._get_daily_prices()
+            self._prices = pd.Series({
+                period_end: daily[daily.index >= filing_date].iloc[:3].mean()
+                for period_end, filing_date in self._get_filings()
+            }).sort_index()
         return self._prices
+
+    def _get_lookback_prices(self, months: int) -> pd.Series:
+        """Close price ~`months` calendar months before each period's filing date
+        (the closest trading day on or before that point), indexed by period-end
+        date — the same filing-date anchor the Price field is measured from, so
+        momentum returns and P/E pricing share a consistent end date.
+        """
+        if months not in self._lookback_prices:
+            daily = self._get_daily_prices()
+            result = {}
+            for period_end, filing_date in self._get_filings():
+                target = filing_date - pd.DateOffset(months=months)
+                window = daily[daily.index <= target]
+                result[period_end] = window.iloc[-1] if not window.empty else None
+            self._lookback_prices[months] = pd.Series(result).sort_index()
+        return self._lookback_prices[months]
 
     def _get_fields(self) -> pd.DataFrame:
         fields_cfg = METRICS_CFG["Fields"]
@@ -104,8 +157,6 @@ class FMP_Financial:
         bs  = bs_raw.set_index("date").sort_index()
         is_ = is_raw.set_index("date").sort_index()
         cf  = cf_raw.set_index("date").sort_index()
-
-        print("CF columns:", cf.columns.tolist())
 
         source_map = {"BS": bs, "IS": is_, "CF": cf}
 
@@ -124,6 +175,10 @@ class FMP_Financial:
                     result[field_name] = _eval_formula(f"{field_name} {formula}", result)
             elif source == "Formula":
                 result[field_name] = _eval_formula(formula, result)
+            elif source == "Price":
+                result[field_name] = self._get_prices().reindex(result.index)
+            elif source == "PriceLookback":
+                result[field_name] = self._get_lookback_prices(int(field_cfg["API"])).reindex(result.index)
 
             if rounding and rounding != "None":
                 result[field_name] = result[field_name].round(int(rounding))
