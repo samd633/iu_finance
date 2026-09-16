@@ -61,12 +61,12 @@
                 "Formula":"Net_CapX / PPE * 100",
                 "Rounding":"3"
                 },
-            "Payout_CAGR_3Yr:":{
+            "Payout_CAGR_3Yr":{
                 "Description":"Common Stock Payout 3-Year CAGR",
                 "Formula":"((Common_Payout.0 / Common_Payout.3) ** (1/3) - 1) * 100",
                 "Rounding":"3"
                 },
-            "Payout_CAGR_5Yr:":{
+            "Payout_CAGR_5Yr":{
                 "Description":"Common Stock Payout 5-Year CAGR",
                 "Formula":"((Common_Payout.0 / Common_Payout.5) ** (1/5) - 1) * 100",
                 "Rounding":"3"
