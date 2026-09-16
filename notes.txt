@@ -6,6 +6,7 @@ Growth Factor:
     - Internal Growth Rate
     - LT Hist EPS Growth
     - LT Hist SPS Growth
+    - CFO Growth
 
 Value Factor:
     - Fwd P/E
@@ -16,6 +17,8 @@ Quality:
     - RoE
     - Debt / Equity
     - Earnings Variability
+    - Shareholder Payout
+    - Payout Growth
 
 ### Metrics for Backtesting ###
 

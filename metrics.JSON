@@ -60,6 +60,16 @@
                 "Description":"Rate of Fixed Asset Growth",
                 "Formula":"Net_CapX / PPE * 100",
                 "Rounding":"3"
+                },
+            "Payout_CAGR_3Yr:":{
+                "Description":"Common Stock Payout 3-Year CAGR",
+                "Formula":"((Common_Payout.0 / Common_Payout.3) ** (1/3) - 1) * 100",
+                "Rounding":"3"
+                },
+            "Payout_CAGR_5Yr:":{
+                "Description":"Common Stock Payout 5-Year CAGR",
+                "Formula":"((Common_Payout.0 / Common_Payout.5) ** (1/5) - 1) * 100",
+                "Rounding":"3"
                 }
             },
         "Value":{
@@ -148,6 +158,13 @@
             "EPS_5Yr_Var":{
                 "Description":"Earnings Per Share 5-Year Variance",
                 "Formula":"STDV(EPS.0, EPS.1, EPS.2, EPS.3, EPS.4) * 100",
+                "Rounding":"3"
+                },
+            "Payout_YLD":{
+                "Description":"Common Stock Payout Yield",
+                "Source":"Formula",
+                "API":"None",
+                "Formula":"Common_Payout / ((MKT_CAP.1 + MKT_CAP) / 2)  * 100",
                 "Rounding":"3"
                 }
             },
@@ -437,6 +454,27 @@
             "API":"None",
             "Formula":"COMM_STOCK + APIC",
             "Rounding":"None"
+        },
+        "NET_STOCK_REPURCHASES":{
+            "Description":"Common Stock Repurchases",
+            "Source":"CF",
+            "API":"netCommonStockIssuance",
+            "Formula":"/ -1_000_000",
+            "Rounding":"None"
+        },
+        "Common_Payout":{
+            "Description":"Common Stock Payout",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"Comm_DIV + NET_STOCK_REPURCHASES",
+            "Rounding":"None"
+        },
+        "Common_Payout_PS":{
+            "Description":"Common Stock Payout",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"Common_Payout / SHARES",
+            "Rounding":"3"
         }
     }
 }
