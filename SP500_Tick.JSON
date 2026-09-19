@@ -1,7 +1,6 @@
 {
-  "source": "Vanguard VOO ETF holdings; sectors via FMP",
-  "as_of_date": "2026-05-31",
-  "retrieved_utc": "2026-06-27T22:29:06+00:00",
+  "source": "Wikipedia S&P 500 constituents; sectors via FMP",
+  "retrieved_utc": "2026-09-19T17:54:30+00:00",
   "count": 503,
   "constituents": [
     {
@@ -57,7 +56,7 @@
     {
       "ticker": "ADP",
       "company_name": "Automatic Data Processing, Inc.",
-      "sector": "Industrials"
+      "sector": "Technology"
     },
     {
       "ticker": "ADSK",
@@ -225,11 +224,6 @@
       "sector": "Utilities"
     },
     {
-      "ticker": "AVB",
-      "company_name": "AvalonBay Communities, Inc.",
-      "sector": "Real Estate"
-    },
-    {
       "ticker": "AVGO",
       "company_name": "Broadcom Inc.",
       "sector": "Technology"
@@ -237,7 +231,7 @@
     {
       "ticker": "AVY",
       "company_name": "Avery Dennison Corporation",
-      "sector": "Basic Materials"
+      "sector": "Consumer Cyclical"
     },
     {
       "ticker": "AWK",
@@ -322,7 +316,7 @@
     {
       "ticker": "BLDR",
       "company_name": "Builders FirstSource, Inc.",
-      "sector": "Industrials"
+      "sector": "Basic Materials"
     },
     {
       "ticker": "BLK",
@@ -373,11 +367,6 @@
       "ticker": "C",
       "company_name": "Citigroup Inc.",
       "sector": "Financial Services"
-    },
-    {
-      "ticker": "CAG",
-      "company_name": "Conagra Brands, Inc.",
-      "sector": "Consumer Defensive"
     },
     {
       "ticker": "CAH",
@@ -563,11 +552,6 @@
       "ticker": "CPAY",
       "company_name": "Corpay, Inc.",
       "sector": "Technology"
-    },
-    {
-      "ticker": "CPB",
-      "company_name": "Campbell Soup Company",
-      "sector": "Consumer Defensive"
     },
     {
       "ticker": "CPRT",
@@ -770,14 +754,14 @@
       "sector": "Healthcare"
     },
     {
-      "ticker": "EA",
-      "company_name": "Electronic Arts Inc.",
-      "sector": "Communication Services"
-    },
-    {
       "ticker": "EBAY",
       "company_name": "eBay Inc.",
       "sector": "Consumer Cyclical"
+    },
+    {
+      "ticker": "ECHO",
+      "company_name": "EchoStar Corporation",
+      "sector": "Communication Services"
     },
     {
       "ticker": "ECL",
@@ -830,18 +814,8 @@
       "sector": "Energy"
     },
     {
-      "ticker": "EPAM",
-      "company_name": "EPAM Systems, Inc.",
-      "sector": "Technology"
-    },
-    {
       "ticker": "EQIX",
       "company_name": "Equinix, Inc.",
-      "sector": "Real Estate"
-    },
-    {
-      "ticker": "EQR",
-      "company_name": "Equity Residential",
       "sector": "Real Estate"
     },
     {
@@ -940,9 +914,19 @@
       "sector": "Industrials"
     },
     {
+      "ticker": "FDXF",
+      "company_name": "FedEx Freight Holding Company, Inc.",
+      "sector": "Industrials"
+    },
+    {
       "ticker": "FE",
       "company_name": "FirstEnergy Corp.",
       "sector": "Utilities"
+    },
+    {
+      "ticker": "FERG",
+      "company_name": "Ferguson plc",
+      "sector": "Industrials"
     },
     {
       "ticker": "FFIV",
@@ -975,6 +959,11 @@
       "sector": "Industrials"
     },
     {
+      "ticker": "FLEX",
+      "company_name": "Flex Ltd.",
+      "sector": "Technology"
+    },
+    {
       "ticker": "FOX",
       "company_name": "Fox Corporation",
       "sector": "Communication Services"
@@ -1002,7 +991,7 @@
     {
       "ticker": "FTV",
       "company_name": "Fortive Corporation",
-      "sector": "Industrials"
+      "sector": "Technology"
     },
     {
       "ticker": "GD",
@@ -1032,7 +1021,7 @@
     {
       "ticker": "GEV",
       "company_name": "GE Vernova Inc.",
-      "sector": "Utilities"
+      "sector": "Industrials"
     },
     {
       "ticker": "GILD",
@@ -1145,6 +1134,11 @@
       "sector": "Industrials"
     },
     {
+      "ticker": "HONA",
+      "company_name": "Honeywell Aerospace Inc",
+      "sector": "Industrials"
+    },
+    {
       "ticker": "HOOD",
       "company_name": "Robinhood Markets, Inc.",
       "sector": "Financial Services"
@@ -1247,7 +1241,7 @@
     {
       "ticker": "IP",
       "company_name": "International Paper Company",
-      "sector": "Consumer Cyclical"
+      "sector": "Basic Materials"
     },
     {
       "ticker": "IQV",
@@ -1272,7 +1266,7 @@
     {
       "ticker": "IT",
       "company_name": "Gartner, Inc.",
-      "sector": "Industrials"
+      "sector": "Technology"
     },
     {
       "ticker": "ITW",
@@ -1302,7 +1296,7 @@
     {
       "ticker": "JCI",
       "company_name": "Johnson Controls International plc",
-      "sector": "Industrials"
+      "sector": "Basic Materials"
     },
     {
       "ticker": "JKHY",
@@ -1487,7 +1481,7 @@
     {
       "ticker": "MAS",
       "company_name": "Masco Corporation",
-      "sector": "Consumer Cyclical"
+      "sector": "Basic Materials"
     },
     {
       "ticker": "MCD",
@@ -1588,6 +1582,11 @@
       "ticker": "MRSH",
       "company_name": "Marsh & McLennan Companies, Inc.",
       "sector": "Financial Services"
+    },
+    {
+      "ticker": "MRVL",
+      "company_name": "Marvell Technology, Inc.",
+      "sector": "Technology"
     },
     {
       "ticker": "MS",
@@ -1870,11 +1869,6 @@
       "sector": "Healthcare"
     },
     {
-      "ticker": "POOL",
-      "company_name": "Pool Corporation",
-      "sector": "Industrials"
-    },
-    {
       "ticker": "PPG",
       "company_name": "PPG Industries, Inc.",
       "sector": "Basic Materials"
@@ -1935,6 +1929,11 @@
       "sector": "Consumer Cyclical"
     },
     {
+      "ticker": "RDDT",
+      "company_name": "Reddit, Inc.",
+      "sector": "Communication Services"
+    },
+    {
       "ticker": "REG",
       "company_name": "Regency Centers Corporation",
       "sector": "Real Estate"
@@ -1972,7 +1971,7 @@
     {
       "ticker": "ROL",
       "company_name": "Rollins, Inc.",
-      "sector": "Consumer Cyclical"
+      "sector": "Industrials"
     },
     {
       "ticker": "ROP",
@@ -1998,11 +1997,6 @@
       "ticker": "RVTY",
       "company_name": "Revvity, Inc.",
       "sector": "Healthcare"
-    },
-    {
-      "ticker": "SATS",
-      "company_name": "EchoStar Corporation",
-      "sector": "Technology"
     },
     {
       "ticker": "SBAC",
@@ -2107,7 +2101,7 @@
     {
       "ticker": "SW",
       "company_name": "Smurfit Westrock plc",
-      "sector": "Basic Materials"
+      "sector": "Consumer Cyclical"
     },
     {
       "ticker": "SWK",
@@ -2257,7 +2251,7 @@
     {
       "ticker": "TTWO",
       "company_name": "Take-Two Interactive Software, Inc.",
-      "sector": "Communication Services"
+      "sector": "Technology"
     },
     {
       "ticker": "TXN",
@@ -2332,7 +2326,7 @@
     {
       "ticker": "VEEV",
       "company_name": "Veeva Systems Inc.",
-      "sector": "Healthcare"
+      "sector": "Technology"
     },
     {
       "ticker": "VICI",
@@ -2353,6 +2347,11 @@
       "ticker": "VMC",
       "company_name": "Vulcan Materials Company",
       "sector": "Basic Materials"
+    },
+    {
+      "ticker": "VMRK",
+      "company_name": "Vivmark Residential",
+      "sector": "Real Estate"
     },
     {
       "ticker": "VRSK",
@@ -2472,7 +2471,7 @@
     {
       "ticker": "WY",
       "company_name": "Weyerhaeuser Company",
-      "sector": "Basic Materials"
+      "sector": "Real Estate"
     },
     {
       "ticker": "WYNN",
