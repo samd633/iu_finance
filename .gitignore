@@ -6,3 +6,7 @@ fmp_key.txt
 yfinance_cache.sqlite
 __pycache__/
 *.pyc
+
+# Data exports
+*.xlsx
+*.csv
