@@ -52,3 +52,13 @@ Momentum:
 Revisions:
     - Price Target Change (3M/6M)
     - 1M EPS Revision
+
+================
+
+To Do:
+
+- Add 3/5 yr Investment - Done
+- Add 24M Return - Done
+- Adjust payout growth to be per share - Done
+- Add payout % of FCF - Done
+- Add return vs SP - Done

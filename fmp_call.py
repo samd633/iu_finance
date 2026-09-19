@@ -42,8 +42,10 @@ _AVERAGE_APIS = {"weightedAverageShsOutDil"}
 
 _FORMULA_FUNCS = {
     # Row-wise (per report date) sample standard deviation across N shifted values,
-    # e.g. STDV(EPS.0, EPS.1, EPS.2, EPS.3, EPS.4) for a trailing 5-period variance.
+    # e.g. STDV(EPS.0, EPS.1, EPS.2, EPS.3, EPS.4) for a trailing 5-period standard deviation.
     "STDV": lambda *series: pd.concat(series, axis=1).std(axis=1),
+    # Row-wise minimum across N shifted values; NaN if any value is missing.
+    "MIN": lambda *series: pd.concat(series, axis=1).min(axis=1, skipna=False),
 }
 
 
@@ -99,8 +101,8 @@ class FMP_Financial:
         self._income_stmt   = None
         self._balance_sheet = None
         self._cash_flow     = None
-        self._daily_prices  = None
-        self._prices        = None
+        self._daily_prices  = {}
+        self._prices        = {}
         self._lookback_prices = {}
 
     def _fetch(self, endpoint: str, **extra_params) -> list[dict]:
@@ -136,58 +138,64 @@ class FMP_Financial:
             for item in self._get_income_stmt()
         )
 
-    def _get_daily_prices(self) -> pd.Series:
-        """Daily close prices spanning from 12 months before the earliest filing
+    def _get_daily_prices(self, symbol: str | None = None) -> pd.Series:
+        """Daily close prices (of `symbol`, default this ticker) spanning from 12 months before the earliest filing
         date through the 3-day post-filing window after the latest — far enough
         back to cover the 12-month momentum lookback for every period.
         """
-        if self._daily_prices is None:
+        symbol = symbol or self.ticker
+        if symbol not in self._daily_prices:
             filings = self._get_filings()
             start = (filings[0][1] - pd.DateOffset(months=12, days=10)).strftime("%Y-%m-%d")
             end = (filings[-1][1] + pd.DateOffset(days=10)).strftime("%Y-%m-%d")
             resp = requests.get(
                 f"{FMP_BASE}/historical-price-eod/full",
-                params={"symbol": self.ticker, "from": start,
+                params={"symbol": symbol, "from": start,
                         "to": end, "apikey": API_KEY},
             )
             resp.raise_for_status()
             records = resp.json()
-            self._daily_prices = pd.Series(
+            self._daily_prices[symbol] = pd.Series(
                 {pd.Timestamp(r["date"]): r["close"] for r in records}
             ).sort_index()
-        return self._daily_prices
+        return self._daily_prices[symbol]
 
-    def _get_prices(self) -> pd.Series:
+    def _get_prices(self, symbol: str | None = None) -> pd.Series:
         """Average close price over the 3 trading days on/after each period's SEC
         filing date (not the fiscal period-end date), indexed by period-end date.
 
         The filing date is when financials actually become public, so pricing off
         it avoids look-ahead bias; averaging a few days past it smooths the
         immediate earnings-reaction jump rather than pricing off a single day.
+        An index `symbol` (e.g. ^GSPC) is priced the same way off this ticker's
+        filing dates.
         """
-        if self._prices is None:
-            daily = self._get_daily_prices()
-            self._prices = pd.Series({
+        if symbol not in self._prices:
+            daily = self._get_daily_prices(symbol)
+            self._prices[symbol] = pd.Series({
                 period_end: daily[daily.index >= filing_date].iloc[:3].mean()
                 for period_end, filing_date in self._get_filings()
             }).sort_index()
-        return self._prices
+        return self._prices[symbol]
 
-    def _get_lookback_prices(self, months: int) -> pd.Series:
-        """Close price ~`months` calendar months before each period's filing date
-        (the closest trading day on or before that point), indexed by period-end
-        date — the same filing-date anchor the Price field is measured from, so
-        momentum returns and P/E pricing share a consistent end date.
+    def _get_lookback_prices(self, months: int, symbol: str | None = None) -> pd.Series:
+        """Average close over the 3 trading days on/after the date `months`
+        calendar months before each period's filing date, indexed by period-end
+        date. This is the same 3-day averaging (and filing-date anchor) as the
+        Price field, so start and end prices of a return are measured the same
+        way. Passing an index `symbol` (e.g. ^GSPC) uses this ticker's own
+        filing dates, so the benchmark is priced on exactly the same dates.
         """
-        if months not in self._lookback_prices:
-            daily = self._get_daily_prices()
+        key = (months, symbol)
+        if key not in self._lookback_prices:
+            daily = self._get_daily_prices(symbol)
             result = {}
             for period_end, filing_date in self._get_filings():
                 target = filing_date - pd.DateOffset(months=months)
-                window = daily[daily.index <= target]
-                result[period_end] = window.iloc[-1] if not window.empty else None
-            self._lookback_prices[months] = pd.Series(result).sort_index()
-        return self._lookback_prices[months]
+                window = daily[daily.index >= target].iloc[:3]
+                result[period_end] = window.mean() if len(window) == 3 else None
+            self._lookback_prices[key] = pd.Series(result, dtype=float).sort_index()
+        return self._lookback_prices[key]
 
     def _select_dates(self, available: pd.DatetimeIndex, num_years: int) -> dict:
         """{target_calendar_year: nearest available quarter-end date}, for
@@ -229,9 +237,12 @@ class FMP_Financial:
             elif source in flow_map:
                 api = field_cfg["API"]
                 raw_col = flow_map[source][api]
-                agg = (raw_col.rolling(4, min_periods=4).mean()
-                       if api in _AVERAGE_APIS else
-                       raw_col.rolling(4, min_periods=4).sum())
+                if field_cfg.get("Aggregation") == "Quarter":
+                    agg = raw_col  # single-quarter value, no TTM aggregation
+                else:
+                    agg = (raw_col.rolling(4, min_periods=4).mean()
+                           if api in _AVERAGE_APIS else
+                           raw_col.rolling(4, min_periods=4).sum())
                 col = agg.reindex(result.index)
             else:
                 continue  # Formula / Price / PriceLookback — handled in _get_fields
@@ -269,9 +280,10 @@ class FMP_Financial:
         for field_name, field_cfg in fields_cfg.items():
             source = field_cfg["Source"]
             if source == "Price":
-                s = self._get_prices().reindex(dates)
+                s = self._get_prices(field_cfg.get("Symbol")).reindex(dates)
             elif source == "PriceLookback":
-                s = self._get_lookback_prices(int(field_cfg["API"])).reindex(dates)
+                symbol = field_cfg.get("Symbol")
+                s = self._get_lookback_prices(int(field_cfg["API"]), symbol).reindex(dates)
             else:
                 continue
             s.index = years_sorted
@@ -312,4 +324,5 @@ class FMP_Financial:
 
 
 if __name__ == "__main__":
-    FMP_Financial("MSFT")._get_metrics().to_csv("msft_metrics.csv", index_label="Year")
+    FMP_Financial("AAPL")._get_metrics().to_csv("aapl_metrics.csv", index_label="Year")
+    # FMP_Financial("AAPL")._get_fields().to_csv("aapl_fields.csv", index_label="Year")
