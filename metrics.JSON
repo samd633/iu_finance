@@ -42,12 +42,12 @@
                 "Rounding":"3"
                 },
             "CFOPS_CAGR_3Yr":{
-                "Description":"Cash Flow from Operations 3-Year CAGR",
+                "Description":"Cash Flow from Operations per Share 3-Year CAGR",
                 "Formula":"(((CFOPS.0 / CFOPS.3) ** (1/3) - 1) * 100).where((CFOPS.0 > 0) & (CFOPS.3 > 0))",
                 "Rounding":"3"
                 },
             "CFOPS_CAGR_5Yr":{
-                "Description":"Cash Flow from Operations 5-Year CAGR",
+                "Description":"Cash Flow from Operations per Share 5-Year CAGR",
                 "Formula":"(((CFOPS.0 / CFOPS.5) ** (1/5) - 1) * 100).where((CFOPS.0 > 0) & (CFOPS.5 > 0))",
                 "Rounding":"3"
                 },
@@ -207,36 +207,26 @@
                 },
             "Payout_YLD":{
                 "Description":"Common Stock Payout Yield",
-                "Source":"Formula",
-                "API":"None",
                 "Formula":"PAYOUT_YLD",
                 "Rounding":"3"
                 },
             "Payout_YLD_3Yr":{
                 "Description":"Common Stock Payout Yield 3-Year Average",
-                "Source":"Formula",
-                "API":"None",
                 "Formula":"(PAYOUT_YLD.0 + PAYOUT_YLD.1 + PAYOUT_YLD.2) / 3",
                 "Rounding":"3"
                 },
             "Payout_YLD_5Yr":{
                 "Description":"Common Stock Payout Yield 5-Year Average",
-                "Source":"Formula",
-                "API":"None",
                 "Formula":"(PAYOUT_YLD.0 + PAYOUT_YLD.1 + PAYOUT_YLD.2 + PAYOUT_YLD.3 + PAYOUT_YLD.4) / 5",
                 "Rounding":"3"
                 },
             "Payout_Ratio":{
                 "Description":"Common Stock Payout Ratio",
-                "Source":"Formula",
-                "API":"None",
                 "Formula":"PAY_RATIO",
                 "Rounding":"3"
                 },
             "FCF_Payout_Ratio":{
                 "Description":"Free Cash Flow Payout Ratio",
-                "Source":"Formula",
-                "API":"None",
                 "Formula":"COMM_PAYOUT / FCF * 100",
                 "Rounding":"3"
                 }
@@ -478,21 +468,21 @@
             "Rounding":"None"
         },
         "COMM_PAYOUT_PS":{
-            "Description":"Common Stock Payout",
+            "Description":"Common Stock Payout per Share",
             "Source":"Formula",
             "API":"None",
             "Formula":"COMM_PAYOUT / SHARES",
             "Rounding":"3"
         },
         "PAY_RATIO":{
-            "Description":"Dividend Payout Ratio",
+            "Description":"Total Payout Ratio (Dividends + Net Buybacks) to Common",
             "Source":"Formula",
             "API":"None",
             "Formula":"COMM_PAYOUT / EARN_COMM * 100",
             "Rounding":"3"
         },
         "RET_RATIO":{
-            "Description":"Dividend Retention Ratio",
+            "Description":"Retention Ratio (1 - Total Payout Ratio)",
             "Source":"Formula",
             "API":"None",
             "Formula":"(1 - PAY_RATIO / 100) * 100",

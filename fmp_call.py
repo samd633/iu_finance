@@ -139,9 +139,11 @@ class FMP_Financial:
         )
 
     def _get_daily_prices(self, symbol: str | None = None) -> pd.Series:
-        """Daily close prices (of `symbol`, default this ticker) spanning from 12 months before the earliest filing
-        date through the 3-day post-filing window after the latest — far enough
-        back to cover the 12-month momentum lookback for every period.
+        """Daily close prices (of `symbol`, default this ticker) spanning from
+        12 months before the earliest filing date through the 3-day post-filing
+        window after the latest. The earliest filings' 24-month lookbacks fall
+        outside this range and come back empty; the returned periods are recent
+        enough that they are covered.
         """
         symbol = symbol or self.ticker
         if symbol not in self._daily_prices:
@@ -172,10 +174,13 @@ class FMP_Financial:
         """
         if symbol not in self._prices:
             daily = self._get_daily_prices(symbol)
-            self._prices[symbol] = pd.Series({
-                period_end: daily[daily.index >= filing_date].iloc[:3].mean()
-                for period_end, filing_date in self._get_filings()
-            }).sort_index()
+            prices = {}
+            for period_end, filing_date in self._get_filings():
+                window = daily[daily.index >= filing_date].iloc[:3]
+                # Same guard as the lookbacks: no price if the stock wasn't trading yet.
+                ok = len(window) > 0 and (window.index[0] - filing_date).days <= 7
+                prices[period_end] = window.mean() if ok else None
+            self._prices[symbol] = pd.Series(prices, dtype=float).sort_index()
         return self._prices[symbol]
 
     def _get_lookback_prices(self, months: int, symbol: str | None = None) -> pd.Series:
@@ -193,7 +198,10 @@ class FMP_Financial:
             for period_end, filing_date in self._get_filings():
                 target = filing_date - pd.DateOffset(months=months)
                 window = daily[daily.index >= target].iloc[:3]
-                result[period_end] = window.mean() if len(window) == 3 else None
+                # Require real trading data at the target date (a week covers
+                # weekends/holidays) so pre-listing targets don't pick up IPO-day prices.
+                ok = len(window) == 3 and (window.index[0] - target).days <= 7
+                result[period_end] = window.mean() if ok else None
             self._lookback_prices[key] = pd.Series(result, dtype=float).sort_index()
         return self._lookback_prices[key]
 
