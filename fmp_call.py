@@ -73,10 +73,18 @@ def _eval_formula(formula: str, df: pd.DataFrame, periods_per_year: int = 1) -> 
     """Evaluate a metrics.JSON formula against a DataFrame of named field columns.
 
     FIELD.N syntax shifts the column N *years* backward (e.g. COMM.1 = prior
-    year COMM), i.e. N * periods_per_year rows. `df` must have one row per
-    consecutive period (gaps filled with NaN rows) for the shift to be exact.
+    year COMM), i.e. N * periods_per_year rows. ROLL_MEAN(FIELD, N) averages
+    every period in the trailing N years, current included (20 quarters for
+    N=5 on quarterly data); NaN if any period in the window is missing.
+    `df` must have one row per consecutive period (gaps filled with NaN rows)
+    for shifts and windows to be calendar-exact.
     """
     field_names = set(df.columns)
+    funcs = {
+        **_FORMULA_FUNCS,
+        "ROLL_MEAN": lambda s, years: s.rolling(years * periods_per_year,
+                                                min_periods=years * periods_per_year).mean(),
+    }
 
     def replacer(m):
         name = m.group(1)
@@ -88,7 +96,7 @@ def _eval_formula(formula: str, df: pd.DataFrame, periods_per_year: int = 1) -> 
         return f'__df["{name}"].shift({shift})'
 
     transformed = re.sub(r'\b([A-Za-z_][A-Za-z0-9_]*)(?:\.(\d+))?', replacer, formula)
-    return eval(transformed, {"__df": df, **_FORMULA_FUNCS})
+    return eval(transformed, {"__df": df, **funcs})
 
 
 class FMP_Financial:
