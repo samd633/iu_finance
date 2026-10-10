@@ -1,5 +1,12 @@
 {
     "Metrics":{
+        "Universe":{
+            "In_Index":{
+                "Description":"S&P 500 Member on Filing Date (Y/N)",
+                "Formula":"IN_INDEX",
+                "Rounding":"None"
+                }
+            },
         "Growth":{
             "Sust_G_Rate":{
                 "Description":"Sustainable Growth Rate",
@@ -631,6 +638,13 @@
             "Symbol":"^GSPC",
             "Formula":"None",
             "Rounding":"3"
+        },
+        "IN_INDEX":{
+            "Description":"S&P 500 Member on Filing Date (Y/N), Point-in-Time",
+            "Source":"Membership",
+            "API":"None",
+            "Formula":"None",
+            "Rounding":"None"
         },
         "EXCESS_RET_12M":{
             "Description":"12-Month Excess Price Return",

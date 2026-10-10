@@ -2,29 +2,36 @@
 FMP API data-fetching + TTM calendarization layer. Returns raw-derived
 DataFrames — no cross-cutting judgment calls beyond calendarization itself.
 
-Annual-equivalent metrics are built from quarterly statements as
-trailing-twelve-month (TTM) aggregates, one per calendar year, snapped to the
-quarter-end nearest a target calendar date (default Dec 31). This puts
-companies with different fiscal year-ends (AAPL ~Sep, MSFT Jun 30, NVDA
-~Jan, ...) on the same economic period so cross-sectional comparisons are
-apples-to-apples:
+Metrics are built from quarterly statements as trailing-twelve-month (TTM)
+aggregates, one row per calendar period, each snapped to the nearest
+calendar target date. With freq="Q" (default) the targets are calendar
+quarter-ends (Mar 31, Jun 30, Sep 30, Dec 31); with freq="A" there is one
+target per year (default Dec 31). This puts companies with different fiscal
+year-ends (AAPL ~Sep, MSFT Jun 30, NVDA ~Jan, ...) on the same economic
+period so cross-sectional comparisons are apples-to-apples:
 
   - Flow fields (income statement, cash flow) are TTM sums of the 4 quarters
-    ending nearest the target date (period averages, e.g. diluted share
-    count, are TTM-averaged instead of summed).
+    ending at the snapped quarter-end (period averages, e.g. diluted share
+    count, are TTM-averaged instead of summed). Quarterly rows are still TTM,
+    so ratios like P/E stay annualized and free of seasonality.
   - Stock fields (balance sheet) are the point-in-time snapshot from that
     same quarter-end.
   - When no quarter actually lands on the target date, we snap to the
     nearest reported quarter-end rather than interpolating; the actual date
     used and its offset from the target are reported alongside each row
     (`_actual_period_end`, `_offset_days`) so a large snap (e.g. NVDA vs a
-    Dec 31 target) is visible rather than hidden.
+    calendar quarter-end) is visible rather than hidden.
+  - FIELD.N in metrics.JSON always means "N years back", whatever the
+    frequency (it shifts 4N rows on quarterly data), so a formula like
+    EPS_CAGR_5Yr means the same thing at either frequency.
 """
 import re
 import json
 import requests
 import requests_cache
 import pandas as pd
+
+from sp_membership import SP500Membership
 
 FMP_BASE = "https://financialmodelingprep.com/stable"
 requests_cache.install_cache('fmp_cache', expire_after=86400, allowable_codes=(200,))
@@ -39,6 +46,19 @@ with open("metrics.JSON") as f:
 # TTM-aggregate with a rolling mean instead of a rolling sum.
 _AVERAGE_APIS = {"weightedAverageShsOutDil"}
 
+_MONTH_ABBR = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+               "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+
+# Shared across instances: building it downloads the full membership history.
+_MEMBERSHIP = None
+
+
+def _get_membership() -> SP500Membership:
+    global _MEMBERSHIP
+    if _MEMBERSHIP is None:
+        _MEMBERSHIP = SP500Membership(API_KEY)
+    return _MEMBERSHIP
+
 
 _FORMULA_FUNCS = {
     # Row-wise (per report date) sample standard deviation across N shifted values,
@@ -49,10 +69,12 @@ _FORMULA_FUNCS = {
 }
 
 
-def _eval_formula(formula: str, df: pd.DataFrame) -> pd.Series:
+def _eval_formula(formula: str, df: pd.DataFrame, periods_per_year: int = 1) -> pd.Series:
     """Evaluate a metrics.JSON formula against a DataFrame of named field columns.
 
-    FIELD.N syntax shifts the column N periods backward (e.g. COMM.1 = prior year COMM).
+    FIELD.N syntax shifts the column N *years* backward (e.g. COMM.1 = prior
+    year COMM), i.e. N * periods_per_year rows. `df` must have one row per
+    consecutive period (gaps filled with NaN rows) for the shift to be exact.
     """
     field_names = set(df.columns)
 
@@ -60,7 +82,7 @@ def _eval_formula(formula: str, df: pd.DataFrame) -> pd.Series:
         name = m.group(1)
         if name not in field_names:
             return m.group(0)
-        shift = int(m.group(2)) if m.group(2) is not None else 0
+        shift = int(m.group(2)) * periods_per_year if m.group(2) is not None else 0
         if shift == 0:
             return f'__df["{name}"]'
         return f'__df["{name}"].shift({shift})'
@@ -72,32 +94,40 @@ def _eval_formula(formula: str, df: pd.DataFrame) -> pd.Series:
 class FMP_Financial:
     def __init__(self,
                  ticker: str,
-                 n: int = 10,
+                 n: int = 40,
+                 freq: str = "Q",
                  month: int = 12,
                  day: int = 31,
                  max_offset_days: int = 45):
         """
-        n: number of calendarized annual (TTM) periods to return.
-        month, day: target calendar date each TTM period is snapped to
-            (default Dec 31), so different tickers can be compared on the
-            same reporting date regardless of fiscal year-end.
-        max_offset_days: a snapped period is dropped if its actual quarter-end
-            is more than this many days from the target date (default 45,
-            half a quarter) — guards against a not-yet-reported current
-            period snapping to a stale prior quarter and masquerading as a
-            full year of data.
+        n: number of calendarized (TTM) periods to return — quarters when
+            freq="Q" (default 40 = 10 years), years when freq="A".
+        freq: "Q" for one row per calendar quarter-end, "A" for one row per
+            year at the month/day target.
+        month, day: annual target date (freq="A" only, default Dec 31), so
+            different tickers can be compared on the same reporting date
+            regardless of fiscal year-end.
+        max_offset_days: a reported quarter-end is dropped if it is more than
+            this many days from its nearest target date (default 45, half a
+            quarter) — on annual data this keeps off-cycle quarters (and a
+            not-yet-reported current year) from masquerading as a year-end.
         """
+        if freq not in ("Q", "A"):
+            raise ValueError(f"freq must be 'Q' or 'A', got {freq!r}")
         self.ticker = ticker.upper()
-        self.period = "quarter"  # all fetches are quarterly; annual-equivalent rows are TTM, calendarized
+        self.period = "quarter"  # all fetches are quarterly; output rows are TTM, calendarized
         self.n = n
+        self.freq = freq
         self.month = month
         self.day = day
         self.max_offset_days = max_offset_days
-        # Quarters of raw history to pull: n requested years + 5 years for
+        self._periods_per_year = 4 if freq == "Q" else 1
+        self._period_freq = "Q-DEC" if freq == "Q" else f"A-{_MONTH_ABBR[month - 1]}"
+        # Quarters of raw history to pull: n requested periods + 5 years for
         # deep-shift metrics (5Yr CAGR/variance) + 1 year for the AVG_*
         # field's own prior-year shift + 2 years slack for the TTM rolling
         # window and quarter-end snapping at the earliest selected point.
-        self._n_quarters = (n + 8) * 4
+        self._n_quarters = n * (4 // self._periods_per_year) + 8 * 4
         self._income_stmt   = None
         self._balance_sheet = None
         self._cash_flow     = None
@@ -205,24 +235,49 @@ class FMP_Financial:
             self._lookback_prices[key] = pd.Series(result, dtype=float).sort_index()
         return self._lookback_prices[key]
 
-    def _select_dates(self, available: pd.DatetimeIndex, num_years: int) -> dict:
-        """{target_calendar_year: nearest available quarter-end date}, for
-        num_years+1 consecutive calendar years ending at the latest year with data.
+    def _get_membership(self) -> pd.Series:
+        """'Y'/'N' S&P 500 membership on each period's SEC filing date (when the
+        report became public — the same anchor as Price), indexed by period-end date.
         """
-        available = available.sort_values()
-        max_year = available.max().year
-        chosen = {}
-        for y in range(max_year - num_years, max_year + 1):
-            target = pd.Timestamp(year=y, month=self.month, day=self.day)
-            diffs = available.map(lambda d: abs((d - target).days))
-            chosen[y] = available[diffs.argmin()]
-        return chosen
+        membership = _get_membership()
+        return pd.Series({
+            period_end: "Y" if membership.is_member(self.ticker, filing_date) else "N"
+            for period_end, filing_date in self._get_filings()
+        }).sort_index()
+
+    def _target_date(self, period: pd.Period) -> pd.Timestamp:
+        if self.freq == "Q":
+            return period.end_time.normalize()
+        return pd.Timestamp(year=period.end_time.year, month=self.month, day=self.day)
+
+    def _assign_periods(self, available: pd.DatetimeIndex) -> pd.DataFrame:
+        """Map each reported quarter-end to its nearest calendar target period.
+
+        Returns one row per consecutive period from the first to the last one
+        with data (index: PeriodIndex), columns `date` (the actual quarter-end,
+        NaT where no quarter landed within max_offset_days) and `offset_days`.
+        If two quarter-ends land on the same period, the closer one wins.
+        """
+        rows = []
+        for d in available.sort_values():
+            p0 = pd.Period(d, freq=self._period_freq)
+            p = min((p0 - 1, p0, p0 + 1), key=lambda p: abs((d - self._target_date(p)).days))
+            offset = (d - self._target_date(p)).days
+            if abs(offset) <= self.max_offset_days:
+                rows.append((p, d, offset))
+        assigned = pd.DataFrame(rows, columns=["period", "date", "offset_days"])
+        assigned = (assigned.loc[assigned["offset_days"].abs()
+                                 .groupby(assigned["period"]).idxmin()]
+                    .set_index("period"))
+        full = pd.period_range(assigned.index.min(), assigned.index.max(),
+                               freq=self._period_freq)
+        return assigned.reindex(full)
 
     def _get_primitive_fields(self) -> pd.DataFrame:
         """BS/IS/CF-sourced fields only, at quarterly frequency: flow fields
         are TTM (trailing-4-quarter) aggregates, stock fields are snapshots.
-        Formula/Price/PriceLookback fields are deferred to annual frequency,
-        where FIELD.N shifts mean "N calendar years back".
+        Formula/Price/PriceLookback/Membership fields are deferred to the
+        calendarized frequency, where FIELD.N shifts mean "N calendar years back".
         """
         fields_cfg = METRICS_CFG["Fields"]
 
@@ -253,7 +308,7 @@ class FMP_Financial:
                            raw_col.rolling(4, min_periods=4).sum())
                 col = agg.reindex(result.index)
             else:
-                continue  # Formula / Price / PriceLookback — handled in _get_fields
+                continue  # Formula / Price / PriceLookback / Membership — handled in _get_fields
 
             result[field_name] = col
             formula = field_cfg.get("Formula")
@@ -270,50 +325,47 @@ class FMP_Financial:
         fields_cfg = METRICS_CFG["Fields"]
         primitives = self._get_primitive_fields()
 
-        # n requested + 5 years for deep-shift metrics + 1 year for AVG_* fields'
-        # own prior-year shift = n+6 rows needed by _get_metrics before its final trim.
-        chosen = self._select_dates(primitives.index, self.n + 6)
-        years_sorted = sorted(chosen)
-        dates = [chosen[y] for y in years_sorted]
+        # Every consecutive calendar period from the first to the last with
+        # data; periods no quarter-end snapped to stay as all-NaN rows so
+        # FIELD.N shifts stay calendar-exact, and are dropped at the end.
+        assigned = self._assign_periods(primitives.index)
+        periods = assigned.index
+        dates = assigned["date"]
 
-        annual = primitives.loc[dates].copy()
-        annual.index = years_sorted
-        annual["_actual_period_end"] = dates
-        annual["_offset_days"] = [
-            (d - pd.Timestamp(year=y, month=self.month, day=self.day)).days
-            for y, d in zip(years_sorted, dates)
-        ]
+        frame = primitives.reindex(dates.values)
+        frame.index = periods
+        frame["_actual_period_end"] = dates
+        frame["_offset_days"] = assigned["offset_days"]
 
-        # Price / PriceLookback fields, resolved at the chosen dates.
+        # Price / PriceLookback / Membership fields, resolved at the snapped dates.
         for field_name, field_cfg in fields_cfg.items():
             source = field_cfg["Source"]
             if source == "Price":
-                s = self._get_prices(field_cfg.get("Symbol")).reindex(dates)
+                s = self._get_prices(field_cfg.get("Symbol"))
             elif source == "PriceLookback":
-                symbol = field_cfg.get("Symbol")
-                s = self._get_lookback_prices(int(field_cfg["API"]), symbol).reindex(dates)
+                s = self._get_lookback_prices(int(field_cfg["API"]), field_cfg.get("Symbol"))
+            elif source == "Membership":
+                s = self._get_membership()
             else:
                 continue
-            s.index = years_sorted
-            annual[field_name] = s
+            s = s.reindex(dates.values)
+            s.index = periods
+            frame[field_name] = s
             rounding = field_cfg.get("Rounding")
             if rounding and rounding != "None":
-                annual[field_name] = annual[field_name].round(int(rounding))
+                frame[field_name] = frame[field_name].round(int(rounding))
 
         # Formula fields, in metrics.JSON declaration order so dependencies
         # (e.g. ROE needs AVG_COMM needs COMM) resolve correctly.
         for field_name, field_cfg in fields_cfg.items():
             if field_cfg["Source"] != "Formula":
                 continue
-            annual[field_name] = _eval_formula(field_cfg["Formula"], annual)
+            frame[field_name] = _eval_formula(field_cfg["Formula"], frame, self._periods_per_year)
             rounding = field_cfg.get("Rounding")
             if rounding and rounding != "None":
-                annual[field_name] = annual[field_name].round(int(rounding))
+                frame[field_name] = frame[field_name].round(int(rounding))
 
-        # Drop periods that snapped too far from the target date — most
-        # commonly the current, still-in-progress year before its
-        # near-target quarter has been reported.
-        return annual[annual["_offset_days"].abs() <= self.max_offset_days]
+        return frame
 
     def _get_metrics(self) -> pd.DataFrame:
         fields = self._get_fields()
@@ -322,15 +374,16 @@ class FMP_Financial:
         for subset in METRICS_CFG["Metrics"].values():
             for metric_name, metric_cfg in subset.items():
                 rounding = metric_cfg.get("Rounding")
-                result[metric_name] = _eval_formula(metric_cfg["Formula"], fields)
+                result[metric_name] = _eval_formula(metric_cfg["Formula"], fields, self._periods_per_year)
                 if rounding and rounding != "None":
                     result[metric_name] = result[metric_name].round(int(rounding))
 
         result["_actual_period_end"] = fields["_actual_period_end"]
         result["_offset_days"] = fields["_offset_days"]
+        # Drop calendar periods no reported quarter-end snapped to.
+        result = result[result["_actual_period_end"].notna()]
         return result.iloc[-self.n:]
 
 
 if __name__ == "__main__":
-    FMP_Financial("AAPL")._get_metrics().to_csv("aapl_metrics.csv", index_label="Year")
-    # FMP_Financial("AAPL")._get_fields().to_csv("aapl_fields.csv", index_label="Year")
+    FMP_Financial("AAPL")._get_metrics().to_csv("aapl_metrics.csv", index_label="Period")
