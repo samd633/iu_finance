@@ -1,7 +1,7 @@
 {
     "Metrics":{
         "Universe":{
-            "In_Index":{
+            "In_Index.D":{
                 "Description":"S&P 500 Member on Filing Date (Y/N)",
                 "Formula":"IN_INDEX",
                 "Rounding":"None"
@@ -274,6 +274,38 @@
                     "Formula":"(EXCESS_RET_12M.0 + EXCESS_RET_12M.1 + EXCESS_RET_12M.2 + EXCESS_RET_12M.3 + EXCESS_RET_12M.4) / 5",
                     "Rounding":"3"
                     }
+            },
+        "Forward":{
+            "Fwd_Return_1Yr.Y":{
+                "Description":"Forward 1-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
+                "Formula":"FWD_RET_1Y",
+                "Rounding":"3"
+                },
+            "Fwd_Return_3Yr.Y":{
+                "Description":"Forward 3-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
+                "Formula":"FWD_RET_3Y",
+                "Rounding":"3"
+                },
+            "Fwd_Return_5Yr.Y":{
+                "Description":"Forward 5-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
+                "Formula":"FWD_RET_5Y",
+                "Rounding":"3"
+                },
+            "Fwd_Excess_Return_1Yr.Y":{
+                "Description":"Forward 1-Year Annualized Total Return less S&P 500 (SPY) Annualized Total Return (Backtest Label)",
+                "Formula":"FWD_RET_1Y - SPY_FWD_RET_1Y",
+                "Rounding":"3"
+                },
+            "Fwd_Excess_Return_3Yr.Y":{
+                "Description":"Forward 3-Year Annualized Total Return less S&P 500 (SPY) Annualized Total Return (Backtest Label)",
+                "Formula":"FWD_RET_3Y - SPY_FWD_RET_3Y",
+                "Rounding":"3"
+                },
+            "Fwd_Excess_Return_5Yr.Y":{
+                "Description":"Forward 5-Year Annualized Total Return less S&P 500 (SPY) Annualized Total Return (Backtest Label)",
+                "Formula":"FWD_RET_5Y - SPY_FWD_RET_5Y",
+                "Rounding":"3"
+                }
             }
         },
     "Fields":{
@@ -652,6 +684,116 @@
             "API":"None",
             "Formula":"((Price - Price_12M_Ago) / Price_12M_Ago - (SP_Price - SP_12M_Ago) / SP_12M_Ago) * 100",
             "Rounding":"3"
+        },
+        "PRICE_ADJ":{
+            "Description":"Dividend-Adjusted Avg Close, 3 Trading Days Following Filing Date",
+            "Source":"Price",
+            "API":"None",
+            "Adjusted":"True",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "PRICE_ADJ_FWD_1Y":{
+            "Description":"Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~12 Months After Filing Date",
+            "Source":"PriceLookahead",
+            "API":"12",
+            "Adjusted":"True",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "PRICE_ADJ_FWD_3Y":{
+            "Description":"Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~36 Months After Filing Date",
+            "Source":"PriceLookahead",
+            "API":"36",
+            "Adjusted":"True",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "PRICE_ADJ_FWD_5Y":{
+            "Description":"Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~60 Months After Filing Date",
+            "Source":"PriceLookahead",
+            "API":"60",
+            "Adjusted":"True",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "SPY_ADJ":{
+            "Description":"SPY (S&P 500 Total Return Proxy) Dividend-Adjusted Avg Close, 3 Trading Days Following Filing Date",
+            "Source":"Price",
+            "API":"None",
+            "Symbol":"SPY",
+            "Adjusted":"True",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "SPY_ADJ_FWD_1Y":{
+            "Description":"SPY Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~12 Months After Filing Date",
+            "Source":"PriceLookahead",
+            "API":"12",
+            "Symbol":"SPY",
+            "Adjusted":"True",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "SPY_ADJ_FWD_3Y":{
+            "Description":"SPY Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~36 Months After Filing Date",
+            "Source":"PriceLookahead",
+            "API":"36",
+            "Symbol":"SPY",
+            "Adjusted":"True",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "SPY_ADJ_FWD_5Y":{
+            "Description":"SPY Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~60 Months After Filing Date",
+            "Source":"PriceLookahead",
+            "API":"60",
+            "Symbol":"SPY",
+            "Adjusted":"True",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "FWD_RET_1Y":{
+            "Description":"Forward 1-Year Total Return, Annualized (%)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"((PRICE_ADJ_FWD_1Y / PRICE_ADJ) ** (1/1) - 1) * 100",
+            "Rounding":"None"
+        },
+        "FWD_RET_3Y":{
+            "Description":"Forward 3-Year Total Return, Annualized (%)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"((PRICE_ADJ_FWD_3Y / PRICE_ADJ) ** (1/3) - 1) * 100",
+            "Rounding":"None"
+        },
+        "FWD_RET_5Y":{
+            "Description":"Forward 5-Year Total Return, Annualized (%)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"((PRICE_ADJ_FWD_5Y / PRICE_ADJ) ** (1/5) - 1) * 100",
+            "Rounding":"None"
+        },
+        "SPY_FWD_RET_1Y":{
+            "Description":"SPY Forward 1-Year Total Return, Annualized (%)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"((SPY_ADJ_FWD_1Y / SPY_ADJ) ** (1/1) - 1) * 100",
+            "Rounding":"None"
+        },
+        "SPY_FWD_RET_3Y":{
+            "Description":"SPY Forward 3-Year Total Return, Annualized (%)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"((SPY_ADJ_FWD_3Y / SPY_ADJ) ** (1/3) - 1) * 100",
+            "Rounding":"None"
+        },
+        "SPY_FWD_RET_5Y":{
+            "Description":"SPY Forward 5-Year Total Return, Annualized (%)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"((SPY_ADJ_FWD_5Y / SPY_ADJ) ** (1/5) - 1) * 100",
+            "Rounding":"None"
         }
     }
 }

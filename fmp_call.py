@@ -133,7 +133,7 @@ class FMP_Financial:
         self._cash_flow     = None
         self._daily_prices  = {}
         self._prices        = {}
-        self._lookback_prices = {}
+        self._offset_prices = {}
 
     def _fetch(self, endpoint: str, **extra_params) -> list[dict]:
         resp = requests.get(
@@ -168,31 +168,38 @@ class FMP_Financial:
             for item in self._get_income_stmt()
         )
 
-    def _get_daily_prices(self, symbol: str | None = None) -> pd.Series:
+    def _get_daily_prices(self, symbol: str | None = None, adjusted: bool = False) -> pd.Series:
         """Daily close prices (of `symbol`, default this ticker) spanning from
-        12 months before the earliest filing date through the 3-day post-filing
-        window after the latest. The earliest filings' 24-month lookbacks fall
-        outside this range and come back empty; the returned periods are recent
-        enough that they are covered.
+        12 months before the earliest filing date through today, so forward
+        (lookahead) prices are available wherever the market has caught up.
+        The earliest filings' 24-month lookbacks fall outside this range and
+        come back empty; the returned periods are recent enough that they are
+        covered.
+
+        adjusted=True uses dividend-adjusted closes (splits and dividends), so
+        ratios of these prices are total returns rather than price returns.
         """
         symbol = symbol or self.ticker
-        if symbol not in self._daily_prices:
+        key = (symbol, adjusted)
+        if key not in self._daily_prices:
             filings = self._get_filings()
             start = (filings[0][1] - pd.DateOffset(months=12, days=10)).strftime("%Y-%m-%d")
-            end = (filings[-1][1] + pd.DateOffset(days=10)).strftime("%Y-%m-%d")
+            end = pd.Timestamp.today().strftime("%Y-%m-%d")
+            endpoint, close = (("dividend-adjusted", "adjClose") if adjusted
+                               else ("full", "close"))
             resp = requests.get(
-                f"{FMP_BASE}/historical-price-eod/full",
+                f"{FMP_BASE}/historical-price-eod/{endpoint}",
                 params={"symbol": symbol, "from": start,
                         "to": end, "apikey": API_KEY},
             )
             resp.raise_for_status()
             records = resp.json()
-            self._daily_prices[symbol] = pd.Series(
-                {pd.Timestamp(r["date"]): r["close"] for r in records}
+            self._daily_prices[key] = pd.Series(
+                {pd.Timestamp(r["date"]): r[close] for r in records}, dtype=float
             ).sort_index()
-        return self._daily_prices[symbol]
+        return self._daily_prices[key]
 
-    def _get_prices(self, symbol: str | None = None) -> pd.Series:
+    def _get_prices(self, symbol: str | None = None, adjusted: bool = False) -> pd.Series:
         """Average close price over the 3 trading days on/after each period's SEC
         filing date (not the fiscal period-end date), indexed by period-end date.
 
@@ -202,38 +209,43 @@ class FMP_Financial:
         An index `symbol` (e.g. ^GSPC) is priced the same way off this ticker's
         filing dates.
         """
-        if symbol not in self._prices:
-            daily = self._get_daily_prices(symbol)
+        key = (symbol, adjusted)
+        if key not in self._prices:
+            daily = self._get_daily_prices(symbol, adjusted)
             prices = {}
             for period_end, filing_date in self._get_filings():
                 window = daily[daily.index >= filing_date].iloc[:3]
-                # Same guard as the lookbacks: no price if the stock wasn't trading yet.
+                # Same guard as the offset prices: no price if the stock wasn't trading yet.
                 ok = len(window) > 0 and (window.index[0] - filing_date).days <= 7
                 prices[period_end] = window.mean() if ok else None
-            self._prices[symbol] = pd.Series(prices, dtype=float).sort_index()
-        return self._prices[symbol]
+            self._prices[key] = pd.Series(prices, dtype=float).sort_index()
+        return self._prices[key]
 
-    def _get_lookback_prices(self, months: int, symbol: str | None = None) -> pd.Series:
+    def _get_offset_prices(self, months: int, symbol: str | None = None,
+                           adjusted: bool = False) -> pd.Series:
         """Average close over the 3 trading days on/after the date `months`
-        calendar months before each period's filing date, indexed by period-end
-        date. This is the same 3-day averaging (and filing-date anchor) as the
-        Price field, so start and end prices of a return are measured the same
-        way. Passing an index `symbol` (e.g. ^GSPC) uses this ticker's own
-        filing dates, so the benchmark is priced on exactly the same dates.
+        calendar months from each period's filing date (negative = lookback,
+        positive = lookahead), indexed by period-end date. This is the same
+        3-day averaging (and filing-date anchor) as the Price field, so start
+        and end prices of a return are measured the same way. Passing an index
+        `symbol` (e.g. ^GSPC) uses this ticker's own filing dates, so the
+        benchmark is priced on exactly the same dates.
         """
-        key = (months, symbol)
-        if key not in self._lookback_prices:
-            daily = self._get_daily_prices(symbol)
+        key = (months, symbol, adjusted)
+        if key not in self._offset_prices:
+            daily = self._get_daily_prices(symbol, adjusted)
             result = {}
             for period_end, filing_date in self._get_filings():
-                target = filing_date - pd.DateOffset(months=months)
+                target = filing_date + pd.DateOffset(months=months)
                 window = daily[daily.index >= target].iloc[:3]
-                # Require real trading data at the target date (a week covers
-                # weekends/holidays) so pre-listing targets don't pick up IPO-day prices.
+                # Require 3 real trading days starting at the target date (a
+                # week covers weekends/holidays): pre-listing lookbacks don't
+                # pick up IPO-day prices, and lookaheads the market hasn't
+                # reached yet (or past a delisting) stay NaN.
                 ok = len(window) == 3 and (window.index[0] - target).days <= 7
                 result[period_end] = window.mean() if ok else None
-            self._lookback_prices[key] = pd.Series(result, dtype=float).sort_index()
-        return self._lookback_prices[key]
+            self._offset_prices[key] = pd.Series(result, dtype=float).sort_index()
+        return self._offset_prices[key]
 
     def _get_membership(self) -> pd.Series:
         """'Y'/'N' S&P 500 membership on each period's SEC filing date (when the
@@ -276,7 +288,7 @@ class FMP_Financial:
     def _get_primitive_fields(self) -> pd.DataFrame:
         """BS/IS/CF-sourced fields only, at quarterly frequency: flow fields
         are TTM (trailing-4-quarter) aggregates, stock fields are snapshots.
-        Formula/Price/PriceLookback/Membership fields are deferred to the
+        Formula/Price/PriceLookback/PriceLookahead/Membership fields are deferred to the
         calendarized frequency, where FIELD.N shifts mean "N calendar years back".
         """
         fields_cfg = METRICS_CFG["Fields"]
@@ -308,7 +320,7 @@ class FMP_Financial:
                            raw_col.rolling(4, min_periods=4).sum())
                 col = agg.reindex(result.index)
             else:
-                continue  # Formula / Price / PriceLookback / Membership — handled in _get_fields
+                continue  # Formula / Price / PriceLookback / PriceLookahead / Membership — handled in _get_fields
 
             result[field_name] = col
             formula = field_cfg.get("Formula")
@@ -337,13 +349,18 @@ class FMP_Financial:
         frame["_actual_period_end"] = dates
         frame["_offset_days"] = assigned["offset_days"]
 
-        # Price / PriceLookback / Membership fields, resolved at the snapped dates.
+        # Price / PriceLookback / PriceLookahead / Membership fields, resolved
+        # at the snapped dates. API is the offset in months for the latter two.
         for field_name, field_cfg in fields_cfg.items():
             source = field_cfg["Source"]
+            symbol = field_cfg.get("Symbol")
+            adjusted = field_cfg.get("Adjusted") == "True"
             if source == "Price":
-                s = self._get_prices(field_cfg.get("Symbol"))
+                s = self._get_prices(symbol, adjusted)
             elif source == "PriceLookback":
-                s = self._get_lookback_prices(int(field_cfg["API"]), field_cfg.get("Symbol"))
+                s = self._get_offset_prices(-int(field_cfg["API"]), symbol, adjusted)
+            elif source == "PriceLookahead":
+                s = self._get_offset_prices(int(field_cfg["API"]), symbol, adjusted)
             elif source == "Membership":
                 s = self._get_membership()
             else:
@@ -378,10 +395,13 @@ class FMP_Financial:
                 if rounding and rounding != "None":
                     result[metric_name] = result[metric_name].round(int(rounding))
 
-        result["_actual_period_end"] = fields["_actual_period_end"]
-        result["_offset_days"] = fields["_offset_days"]
+        # Column suffixes for backtesting: ".Y" = target (set in metrics.JSON),
+        # ".D" = drop (neither predictor nor target, e.g. filters/metadata);
+        # unsuffixed columns are predictors.
+        result["_actual_period_end.D"] = fields["_actual_period_end"]
+        result["_offset_days.D"] = fields["_offset_days"]
         # Drop calendar periods no reported quarter-end snapped to.
-        result = result[result["_actual_period_end"].notna()]
+        result = result[result["_actual_period_end.D"].notna()]
         return result.iloc[-self.n:]
 
 
