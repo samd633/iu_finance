@@ -27,6 +27,8 @@ period so cross-sectional comparisons are apples-to-apples:
 """
 import re
 import json
+import time
+import threading
 import requests
 import requests_cache
 import pandas as pd
@@ -46,18 +48,91 @@ with open("metrics.JSON") as f:
 # TTM-aggregate with a rolling mean instead of a rolling sum.
 _AVERAGE_APIS = {"weightedAverageShsOutDil"}
 
+# Max days between a balance-sheet / cash-flow record and the income-statement
+# quarter-end it is matched to (see _get_primitive_fields).
+ALIGN_TOLERANCE_DAYS = 10
+
 _MONTH_ABBR = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
                "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
 # Shared across instances: building it downloads the full membership history.
 _MEMBERSHIP = None
+_MEMBERSHIP_LOCK = threading.Lock()
+
+# Benchmark (non-ticker) daily prices, e.g. ^GSPC / SPY, shared across
+# instances so a multi-ticker run fetches each benchmark once rather than
+# once per ticker. Fetched from a fixed early date to cover any ticker.
+_BENCHMARK_START = "1995-01-01"
+_BENCHMARK_PRICES: dict[tuple[str, bool], pd.Series] = {}
+_BENCHMARK_LOCK = threading.Lock()
 
 
 def _get_membership() -> SP500Membership:
     global _MEMBERSHIP
-    if _MEMBERSHIP is None:
-        _MEMBERSHIP = SP500Membership(API_KEY)
+    with _MEMBERSHIP_LOCK:
+        if _MEMBERSHIP is None:
+            _MEMBERSHIP = SP500Membership(API_KEY)
     return _MEMBERSHIP
+
+
+def _get_json(url: str, params: dict):
+    """GET with retry/backoff on HTTP 429 (FMP per-minute rate limit)."""
+    for attempt in range(6):
+        resp = requests.get(url, params=params, timeout=60)
+        if resp.status_code != 429:
+            break
+        time.sleep(min(60, 5 * 2 ** attempt))
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _dedupe_statements(records: list[dict]) -> list[dict]:
+    """One statement per period-end date.
+
+    FMP occasionally returns the same quarter twice under different fiscal
+    labels (e.g. AIV's 2024-12-31 balance sheet as both FY2024 Q4 and FY2025
+    Q3, with different values). Keep the record whose (period, fiscal-year
+    offset) matches the company's usual label for that calendar month, as
+    learned from its non-duplicated quarters; fall back to the latest-accepted.
+    """
+    df = pd.DataFrame(records)
+    if df.empty or not df["date"].duplicated().any():
+        return records
+    month = pd.to_datetime(df["date"]).dt.month
+    label = list(zip(df["period"], df["fiscalYear"].astype(int) - pd.to_datetime(df["date"]).dt.year))
+    unique = ~df["date"].duplicated(keep=False)
+    usual = (pd.DataFrame({"month": month[unique], "label": [label[i] for i in df.index[unique]]})
+             .groupby("month")["label"].agg(lambda s: s.mode().iloc[0]))
+    df["_fits"] = [usual.get(m) == lab for m, lab in zip(month, label)]
+    df["_accepted"] = df.get("acceptedDate", df.get("filingDate"))
+    keep = (df.sort_values(["_fits", "_accepted"])
+              .drop_duplicates("date", keep="last").index)
+    return [records[i] for i in sorted(keep)]
+
+
+def _fetch_daily_bars(symbol: str, start: str, adjusted: bool) -> pd.DataFrame:
+    """Daily close and volume from `start` through today, fetched in 10-year
+    chunks because FMP truncates each response to 5,000 rows (~20 years)."""
+    endpoint, close = ("dividend-adjusted", "adjClose") if adjusted else ("full", "close")
+    today = pd.Timestamp.today().normalize()
+    bars = {}
+    chunk_start = pd.Timestamp(start)
+    while chunk_start <= today:
+        chunk_end = min(chunk_start + pd.DateOffset(years=10, days=-1), today)
+        records = _get_json(
+            f"{FMP_BASE}/historical-price-eod/{endpoint}",
+            {"symbol": symbol, "from": chunk_start.strftime("%Y-%m-%d"),
+             "to": chunk_end.strftime("%Y-%m-%d"), "apikey": API_KEY},
+        )
+        bars.update({pd.Timestamp(r["date"]): (r[close], r.get("volume")) for r in records})
+        chunk_start = chunk_end + pd.Timedelta(days=1)
+    return pd.DataFrame.from_dict(bars, orient="index", columns=["close", "volume"],
+                                  dtype=float).sort_index()
+
+
+def _fetch_daily_prices(symbol: str, start: str, adjusted: bool) -> pd.Series:
+    """Daily closes from `start` through today (see _fetch_daily_bars)."""
+    return _fetch_daily_bars(symbol, start, adjusted)["close"]
 
 
 _FORMULA_FUNCS = {
@@ -139,18 +214,20 @@ class FMP_Financial:
         self._income_stmt   = None
         self._balance_sheet = None
         self._cash_flow     = None
+        self._profile       = None
         self._daily_prices  = {}
         self._prices        = {}
         self._offset_prices = {}
 
     def _fetch(self, endpoint: str, **extra_params) -> list[dict]:
-        resp = requests.get(
+        records = _get_json(
             f"{FMP_BASE}/{endpoint}",
-            params={"symbol": self.ticker, "period": self.period,
-                    "apikey": API_KEY, **extra_params},
+            {"symbol": self.ticker, "period": self.period,
+             "apikey": API_KEY, **extra_params},
         )
-        resp.raise_for_status()
-        return resp.json()
+        if not records:
+            raise ValueError(f"FMP returned no {endpoint} data for {self.ticker}")
+        return _dedupe_statements(records)
 
     def _get_income_stmt(self) -> list[dict]:
         if self._income_stmt is None:
@@ -168,6 +245,15 @@ class FMP_Financial:
         if self._cash_flow is None:
             self._cash_flow = self._fetch("cash-flow-statement", limit=self._n_quarters)
         return self._cash_flow
+
+    def _get_profile(self) -> dict:
+        """FMP company profile (sector, industry, ...). Current classification
+        only — FMP keeps no history, so it applies to every period."""
+        if self._profile is None:
+            records = _get_json(f"{FMP_BASE}/profile",
+                                {"symbol": self.ticker, "apikey": API_KEY})
+            self._profile = records[0] if records else {}
+        return self._profile
 
     def _get_filings(self) -> list[tuple[pd.Timestamp, pd.Timestamp]]:
         """(period-end date, SEC filing date) pairs, one per quarterly income-statement period."""
@@ -189,23 +275,26 @@ class FMP_Financial:
         """
         symbol = symbol or self.ticker
         key = (symbol, adjusted)
-        if key not in self._daily_prices:
+        if symbol != self.ticker:
+            with _BENCHMARK_LOCK:
+                if key not in _BENCHMARK_PRICES:
+                    _BENCHMARK_PRICES[key] = _fetch_daily_prices(symbol, _BENCHMARK_START, adjusted)
+            return _BENCHMARK_PRICES[key]
+        return self._get_daily_bars(adjusted)["close"]
+
+    def _get_daily_bars(self, adjusted: bool = False) -> pd.DataFrame:
+        """This ticker's daily close and volume over the _get_daily_prices range."""
+        if adjusted not in self._daily_prices:
             filings = self._get_filings()
             start = (filings[0][1] - pd.DateOffset(months=12, days=10)).strftime("%Y-%m-%d")
-            end = pd.Timestamp.today().strftime("%Y-%m-%d")
-            endpoint, close = (("dividend-adjusted", "adjClose") if adjusted
-                               else ("full", "close"))
-            resp = requests.get(
-                f"{FMP_BASE}/historical-price-eod/{endpoint}",
-                params={"symbol": symbol, "from": start,
-                        "to": end, "apikey": API_KEY},
-            )
-            resp.raise_for_status()
-            records = resp.json()
-            self._daily_prices[key] = pd.Series(
-                {pd.Timestamp(r["date"]): r[close] for r in records}, dtype=float
-            ).sort_index()
-        return self._daily_prices[key]
+            self._daily_prices[adjusted] = _fetch_daily_bars(self.ticker, start, adjusted)
+        return self._daily_prices[adjusted]
+
+    def _get_dollar_volume(self) -> pd.Series:
+        """Daily traded value (close x volume, both split-adjusted, no
+        dividend adjustment), e.g. to pick the most liquid share class."""
+        bars = self._get_daily_bars(adjusted=False)
+        return bars["close"] * bars["volume"]
 
     def _get_prices(self, symbol: str | None = None, adjusted: bool = False) -> pd.Series:
         """Average close price over the 3 trading days on/after each period's SEC
@@ -296,7 +385,7 @@ class FMP_Financial:
     def _get_primitive_fields(self) -> pd.DataFrame:
         """BS/IS/CF-sourced fields only, at quarterly frequency: flow fields
         are TTM (trailing-4-quarter) aggregates, stock fields are snapshots.
-        Formula/Price/PriceLookback/PriceLookahead/Membership fields are deferred to the
+        Formula/Price/PriceLookback/PriceLookahead/Membership/Profile fields are deferred to the
         calendarized frequency, where FIELD.N shifts mean "N calendar years back".
         """
         fields_cfg = METRICS_CFG["Fields"]
@@ -312,11 +401,24 @@ class FMP_Financial:
         cf = cf_raw.set_index("date").sort_index()
         flow_map = {"IS": is_, "CF": cf}
 
-        result = pd.DataFrame(index=bs.index)
+        # Rows are income-statement quarter-ends (what filing dates and prices
+        # key on), plus any earlier balance-sheet-only quarters (the extra
+        # year fetched for prior-year averages). BS/CF records are matched to
+        # the nearest row within ALIGN_TOLERANCE_DAYS: FMP sometimes dates
+        # the statements of one quarter a few days apart (52/53-week fiscal
+        # calendars), and a record further off than that is left unmatched
+        # rather than blanking the whole row.
+        base = is_.index.union(bs.index[bs.index < is_.index.min()])
+        tolerance = pd.Timedelta(days=ALIGN_TOLERANCE_DAYS)
+
+        def align(col: pd.Series) -> pd.Series:
+            return col.reindex(base, method="nearest", tolerance=tolerance)
+
+        result = pd.DataFrame(index=base)
         for field_name, field_cfg in fields_cfg.items():
             source = field_cfg["Source"]
             if source == "BS":
-                col = bs[field_cfg["API"]].reindex(result.index)
+                col = align(bs[field_cfg["API"]])
             elif source in flow_map:
                 api = field_cfg["API"]
                 raw_col = flow_map[source][api]
@@ -326,9 +428,9 @@ class FMP_Financial:
                     agg = (raw_col.rolling(4, min_periods=4).mean()
                            if api in _AVERAGE_APIS else
                            raw_col.rolling(4, min_periods=4).sum())
-                col = agg.reindex(result.index)
+                col = align(agg)
             else:
-                continue  # Formula / Price / PriceLookback / PriceLookahead / Membership — handled in _get_fields
+                continue  # Formula / Price / PriceLookback / PriceLookahead / Membership / Profile — handled in _get_fields
 
             result[field_name] = col
             formula = field_cfg.get("Formula")
@@ -357,7 +459,7 @@ class FMP_Financial:
         frame["_actual_period_end"] = dates
         frame["_offset_days"] = assigned["offset_days"]
 
-        # Price / PriceLookback / PriceLookahead / Membership fields, resolved
+        # Price / PriceLookback / PriceLookahead / Membership / Profile fields, resolved
         # at the snapped dates. API is the offset in months for the latter two.
         for field_name, field_cfg in fields_cfg.items():
             source = field_cfg["Source"]
@@ -371,6 +473,10 @@ class FMP_Financial:
                 s = self._get_offset_prices(int(field_cfg["API"]), symbol, adjusted)
             elif source == "Membership":
                 s = self._get_membership()
+            elif source == "Profile":
+                # Static company attribute (API = profile key), same in every row.
+                frame[field_name] = self._get_profile().get(field_cfg["API"])
+                continue
             else:
                 continue
             s = s.reindex(dates.values)

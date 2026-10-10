@@ -5,6 +5,23 @@
                 "Description":"S&P 500 Member on Filing Date (Y/N)",
                 "Formula":"IN_INDEX",
                 "Rounding":"None"
+                },
+            "Sector.D":{
+                "Description":"FMP Sector (current classification, applied to all periods)",
+                "Formula":"SECTOR",
+                "Rounding":"None"
+                },
+            "Industry.D":{
+                "Description":"FMP Industry (current classification, applied to all periods)",
+                "Formula":"INDUSTRY",
+                "Rounding":"None"
+                }
+            },
+        "Size":{
+            "Mkt_Cap":{
+                "Description":"Market Capitalization at Filing ($M): 3-Day Post-Filing Avg Price x Period-End Diluted Shares",
+                "Formula":"MKT_CAP",
+                "Rounding":"3"
                 }
             },
         "Growth":{
@@ -706,6 +723,20 @@
             "Symbol":"^GSPC",
             "Formula":"None",
             "Rounding":"3"
+        },
+        "SECTOR":{
+            "Description":"FMP Sector (current; FMP keeps no classification history)",
+            "Source":"Profile",
+            "API":"sector",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "INDUSTRY":{
+            "Description":"FMP Industry (current; FMP keeps no classification history)",
+            "Source":"Profile",
+            "API":"industry",
+            "Formula":"None",
+            "Rounding":"None"
         },
         "IN_INDEX":{
             "Description":"S&P 500 Member on Filing Date (Y/N), Point-in-Time",
