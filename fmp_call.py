@@ -48,6 +48,30 @@ with open("metrics.JSON") as f:
 # TTM-aggregate with a rolling mean instead of a rolling sum.
 _AVERAGE_APIS = {"weightedAverageShsOutDil"}
 
+# Sector/industry for former S&P 500 members whose FMP profile is missing
+# (delisted, no profile) or now describes a different company that reused
+# the ticker. Values use FMP's own taxonomy so they group with live profiles.
+PROFILE_OVERRIDES = {
+    "AABA": ("Communication Services", "Internet Content & Information"),  # Yahoo while in the index (left 2017-06)
+    "AGN":  ("Healthcare", "Drug Manufacturers - Specialty & Generic"),     # Allergan
+    "APC":  ("Energy", "Oil & Gas Exploration & Production"),               # Anadarko; profile is now ARKO Petroleum
+    "CELG": ("Healthcare", "Biotechnology"),                                # Celgene
+    "CXO":  ("Energy", "Oil & Gas Exploration & Production"),               # Concho Resources
+    "ETFC": ("Financial Services", "Financial - Capital Markets"),          # E*TRADE
+    "FLIR": ("Technology", "Hardware, Equipment & Parts"),                  # FLIR Systems (as acquirer Teledyne)
+    "FTR":  ("Communication Services", "Telecommunications Services"),      # Frontier Communications
+    "NBL":  ("Energy", "Oil & Gas Exploration & Production"),               # Noble Energy
+    "RHT":  ("Technology", "Software - Infrastructure"),                    # Red Hat
+    "RTN":  ("Industrials", "Aerospace & Defense"),                         # Raytheon
+    "SNI":  ("Communication Services", "Entertainment"),                    # Scripps Networks
+    "SPLS": ("Consumer Cyclical", "Specialty Retail"),                      # Staples; profile is now a PIMCO ETF
+    "TIF":  ("Consumer Cyclical", "Luxury Goods"),                          # Tiffany
+    "TSS":  ("Financial Services", "Financial - Credit Services"),          # Total System Services (as acquirer GPN)
+    "VAR":  ("Healthcare", "Medical - Instruments & Supplies"),             # Varian Medical
+    "VIAB": ("Communication Services", "Entertainment"),                    # Viacom
+    "XEC":  ("Energy", "Oil & Gas Exploration & Production"),               # Cimarex Energy
+}
+
 # Max days between a balance-sheet / cash-flow record and the income-statement
 # quarter-end it is matched to (see _get_primitive_fields).
 ALIGN_TOLERANCE_DAYS = 10
@@ -252,7 +276,10 @@ class FMP_Financial:
         if self._profile is None:
             records = _get_json(f"{FMP_BASE}/profile",
                                 {"symbol": self.ticker, "apikey": API_KEY})
-            self._profile = records[0] if records else {}
+            self._profile = dict(records[0]) if records else {}
+            if self.ticker in PROFILE_OVERRIDES:
+                sector, industry = PROFILE_OVERRIDES[self.ticker]
+                self._profile.update(sector=sector, industry=industry)
         return self._profile
 
     def _get_filings(self) -> list[tuple[pd.Timestamp, pd.Timestamp]]:

@@ -4,339 +4,416 @@
             "In_Index.D":{
                 "Description":"S&P 500 Member on Filing Date (Y/N)",
                 "Formula":"IN_INDEX",
-                "Rounding":"None"
+                "Rounding":"None",
+                "Standardize":"None"
                 },
             "Sector.D":{
                 "Description":"FMP Sector (current classification, applied to all periods)",
                 "Formula":"SECTOR",
-                "Rounding":"None"
+                "Rounding":"None",
+                "Standardize":"None"
                 },
             "Industry.D":{
                 "Description":"FMP Industry (current classification, applied to all periods)",
                 "Formula":"INDUSTRY",
-                "Rounding":"None"
+                "Rounding":"None",
+                "Standardize":"None"
                 }
             },
         "Size":{
-            "Mkt_Cap":{
+            "Mkt_Cap.D":{
                 "Description":"Market Capitalization at Filing ($M): 3-Day Post-Filing Avg Price x Period-End Diluted Shares",
                 "Formula":"MKT_CAP",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"None"
                 }
             },
         "Growth":{
             "Sust_G_Rate":{
                 "Description":"Sustainable Growth Rate",
                 "Formula":"(ROE / 100) * (RET_RATIO / 100) * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "Int_G_Rate":{
                 "Description":"Internal Growth Rate",
                 "Formula":"(ROA / 100) * (RET_RATIO / 100) * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "EPS_Growth_1Yr":{
                 "Description":"Earnings Per Share Growth",
                 "Formula":"((EPS.0 - EPS.1) / EPS.1 * 100).where((EPS.0 > 0) & (EPS.1 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "SPS_Growth_1Yr":{
                 "Description":"Sales Per Share Growth",
                 "Formula":"((SPS.0 - SPS.1) / SPS.1 * 100).where((SPS.0 > 0) & (SPS.1 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "EPS_CAGR_3Yr":{
                 "Description":"Earnings Per Share 3-Year CAGR",
                 "Formula":"(((EPS.0 / EPS.3) ** (1/3) - 1) * 100).where((EPS.0 > 0) & (EPS.3 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "EPS_CAGR_5Yr":{
                 "Description":"Earnings Per Share 5-Year CAGR",
                 "Formula":"(((EPS.0 / EPS.5) ** (1/5) - 1) * 100).where((EPS.0 > 0) & (EPS.5 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "SPS_CAGR_3Yr":{
                 "Description":"Sales Per Share 3-Year CAGR",
                 "Formula":"(((SPS.0 / SPS.3) ** (1/3) - 1) * 100).where((SPS.0 > 0) & (SPS.3 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "SPS_CAGR_5Yr":{
                 "Description":"Sales Per Share 5-Year CAGR",
                 "Formula":"(((SPS.0 / SPS.5) ** (1/5) - 1) * 100).where((SPS.0 > 0) & (SPS.5 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "CFOPS_CAGR_3Yr":{
                 "Description":"Cash Flow from Operations per Share 3-Year CAGR",
                 "Formula":"(((CFOPS.0 / CFOPS.3) ** (1/3) - 1) * 100).where((CFOPS.0 > 0) & (CFOPS.3 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "CFOPS_CAGR_5Yr":{
                 "Description":"Cash Flow from Operations per Share 5-Year CAGR",
                 "Formula":"(((CFOPS.0 / CFOPS.5) ** (1/5) - 1) * 100).where((CFOPS.0 > 0) & (CFOPS.5 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "FCFPS_CAGR_3Yr":{
                 "Description":"Free Cash Flow per Share 3-Year CAGR",
                 "Formula":"(((FCF_PS.0 / FCF_PS.3) ** (1/3) - 1) * 100).where((FCF_PS.0 > 0) & (FCF_PS.3 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "FCFPS_CAGR_5Yr":{
                 "Description":"Free Cash Flow per Share 5-Year CAGR",
                 "Formula":"(((FCF_PS.0 / FCF_PS.5) ** (1/5) - 1) * 100).where((FCF_PS.0 > 0) & (FCF_PS.5 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "Inv_Rate":{
                 "Description":"Rate of Fixed Investment",
                 "Formula":"INV_RATE",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "Inv_Rate_3Yr":{
                 "Description":"Rate of Fixed Investment 3-Year Average",
                 "Formula":"(INV_RATE.0 + INV_RATE.1 + INV_RATE.2) / 3",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "Inv_Rate_5Yr":{
                 "Description":"Rate of Fixed Investment 5-Year Average",
                 "Formula":"(INV_RATE.0 + INV_RATE.1 + INV_RATE.2 + INV_RATE.3 + INV_RATE.4) / 5",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "CapX_Intensity":{
                 "Description":"Capital Expenditures as % of Cash Flow from Operations; NaN if CFO <= 0",
                 "Formula":"(CAPX / CFO * 100).where(CFO > 0)",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "Asset_G_Rate":{
                 "Description":"Rate of Fixed Asset Growth (YoY Change in Net PP&E)",
                 "Formula":"(PPE.0 / PPE.1 - 1) * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "Payout_CAGR_3Yr":{
                 "Description":"Common Stock Payout 3-Year CAGR",
                 "Formula":"(((COMM_PAYOUT_PS.0 / COMM_PAYOUT_PS.3) ** (1/3) - 1) * 100).where((COMM_PAYOUT_PS.0 > 0) & (COMM_PAYOUT_PS.3 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "Payout_CAGR_5Yr":{
                 "Description":"Common Stock Payout 5-Year CAGR",
                 "Formula":"(((COMM_PAYOUT_PS.0 / COMM_PAYOUT_PS.5) ** (1/5) - 1) * 100).where((COMM_PAYOUT_PS.0 > 0) & (COMM_PAYOUT_PS.5 > 0))",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 }
             },
         "Value":{
-            "P_E":{
-                "Description":"Price to Earnings Ratio",
-                "Formula":"Price / EPS",
-                "Rounding":"3"
+            "E_P":{
+                "Description":"Earnings Yield (%): EPS / Price; negative for losses",
+                "Formula":"EPS / Price * 100",
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
-            "P_S":{
-                "Description":"Price to Sales Ratio",
-                "Formula":"Price / SPS",
-                "Rounding":"3"
+            "S_P":{
+                "Description":"Sales Yield (%): Sales per Share / Price",
+                "Formula":"SPS / Price * 100",
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
-            "P_B":{
-                "Description":"Price to Book Value Ratio",
-                "Formula":"Price / BVPS",
-                "Rounding":"3"
+            "B_P":{
+                "Description":"Book Yield (%): Book Value per Share / Price; negative for negative book equity",
+                "Formula":"BVPS / Price * 100",
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
-            "P_CFO":{
-                "Description":"Price to Cash Flow from Operations Ratio",
-                "Formula":"Price / CFOPS",
-                "Rounding":"3"
+            "CFO_P":{
+                "Description":"Operating Cash Flow Yield (%): CFO per Share / Price",
+                "Formula":"CFOPS / Price * 100",
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
-            "P_FCF":{
-                "Description":"Price to Free Cash Flow Ratio",
-                "Formula":"Price / FCF_PS",
-                "Rounding":"3"
+            "FCF_P":{
+                "Description":"Free Cash Flow Yield (%): FCF per Share / Price",
+                "Formula":"FCF_PS / Price * 100",
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
-            "EV_EBITDA":{
-                "Description":"Enterprise Value to EBITDA Ratio",
-                "Formula":"EV / EBITDA",
-                "Rounding":"3"
+            "EBITDA_EV":{
+                "Description":"EBITDA Yield on Enterprise Value (%); NaN if EV <= 0",
+                "Formula":"(EBITDA / EV * 100).where(EV > 0)",
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
-            "EV_CFO":{
-                "Description":"Enterprise Value to Cash Flow from Operations Ratio",
-                "Formula":"EV / CFO",
-                "Rounding":"3"
+            "CFO_EV":{
+                "Description":"Operating Cash Flow Yield on Enterprise Value (%); NaN if EV <= 0",
+                "Formula":"(CFO / EV * 100).where(EV > 0)",
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "PEG_3Yr":{
                 "Description":"P/E to 3-Year EPS CAGR (%); NaN if EPS <= 0 or CAGR <= 0",
                 "Formula":"(PE / EPS_CAGR_3Y).where(EPS_CAGR_3Y > 0)",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "PEG_5Yr":{
                 "Description":"P/E to 5-Year EPS CAGR (%); NaN if EPS <= 0 or CAGR <= 0",
                 "Formula":"(PE / EPS_CAGR_5Y).where(EPS_CAGR_5Y > 0)",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "P_E_Rel_5Yr":{
                 "Description":"P/E less its 5-Year Average (all periods in trailing 5 years, current included: 20 quarters on quarterly data); NaN if EPS <= 0 in any of them",
                 "Formula":"PE - ROLL_MEAN(PE, 5)",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 }
             },
         "Quality":{
             "ROE":{
                 "Description":"Return on Equity",
                 "Formula":"EARN_COMM / AVG_COMM * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "ROE_3Yr":{
                 "Description":"Return on Equity 3-Year Average",
                 "Formula":"(ROE.0 + ROE.1 + ROE.2) / 3",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "ROE_5Yr":{
                 "Description":"Return on Equity 5-Year Average",
                 "Formula":"(ROE.0 + ROE.1 + ROE.2 + ROE.3 + ROE.4) / 5",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
+                },
+            "ROA":{
+                "Description":"Return on Assets: Net Income / Average Total Assets (%)",
+                "Formula":"EARN / AVG_ASSETS * 100",
+                "Rounding":"3",
+                "Standardize":"Universe"
+                },
+            "ROIC":{
+                "Description":"Return on Invested Capital: NOPAT / Average Total Invested Capital (debt + equity + minority interest) (%); NaN if invested capital <= 0",
+                "Formula":"(NOPAT / AVG_TOT_INV_CAP * 100).where(AVG_TOT_INV_CAP > 0)",
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "EBITDA_MGN":{
                 "Description":"EBITDA Margin",
                 "Formula":"EBITDA / REV * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "EBITDA_MGN_3Yr":{
                 "Description":"EBITDA Margin 3-Year Average",
                 "Formula":"(EBITDA_MGN.0 + EBITDA_MGN.1 + EBITDA_MGN.2) / 3",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "EBITDA_MGN_5Yr":{
                 "Description":"EBITDA Margin 5-Year Average",
                 "Formula":"(EBITDA_MGN.0 + EBITDA_MGN.1 + EBITDA_MGN.2 + EBITDA_MGN.3 + EBITDA_MGN.4) / 5",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "CFO_MGN":{
                 "Description":"Cash Flow from Operations Margin",
                 "Formula":"CFO / REV * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "CFO_MGN_3Yr":{
                 "Description":"Cash Flow from Operations Margin 3-Year Average",
                 "Formula":"(CFO_MGN.0 + CFO_MGN.1 + CFO_MGN.2) / 3",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "CFO_MGN_5Yr":{
                 "Description":"Cash Flow from Operations Margin 5-Year Average",
                 "Formula":"(CFO_MGN.0 + CFO_MGN.1 + CFO_MGN.2 + CFO_MGN.3 + CFO_MGN.4) / 5",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "FCF_MGN":{
                 "Description":"Free Cash Flow Margin",
                 "Formula":"FCF / REV * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "FCF_MGN_3Yr":{
                 "Description":"Free Cash Flow Margin 3-Year Average",
                 "Formula":"(FCF_MGN.0 + FCF_MGN.1 + FCF_MGN.2) / 3",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "FCF_MGN_5Yr":{
                 "Description":"Free Cash Flow Margin 5-Year Average",
                 "Formula":"(FCF_MGN.0 + FCF_MGN.1 + FCF_MGN.2 + FCF_MGN.3 + FCF_MGN.4) / 5",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "DEBT_EQ":{
                 "Description":"Debt to Equity Ratio",
                 "Formula":"TOT_DEBT / EQUITY * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Sector"
                 },
             "EPS_Var_5Yr":{
                 "Description":"Earnings Per Share 5-Year Variability (Std Dev of YoY EPS Growth, %); NaN if any EPS <= 0 in window",
                 "Formula":"STDV((EPS.0 / EPS.1 - 1) * 100, (EPS.1 / EPS.2 - 1) * 100, (EPS.2 / EPS.3 - 1) * 100, (EPS.3 / EPS.4 - 1) * 100, (EPS.4 / EPS.5 - 1) * 100).where(MIN(EPS.0, EPS.1, EPS.2, EPS.3, EPS.4, EPS.5) > 0)",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "Payout_YLD":{
                 "Description":"Common Stock Payout Yield",
                 "Formula":"PAYOUT_YLD",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "Payout_YLD_3Yr":{
                 "Description":"Common Stock Payout Yield 3-Year Average",
                 "Formula":"(PAYOUT_YLD.0 + PAYOUT_YLD.1 + PAYOUT_YLD.2) / 3",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "Payout_YLD_5Yr":{
                 "Description":"Common Stock Payout Yield 5-Year Average",
                 "Formula":"(PAYOUT_YLD.0 + PAYOUT_YLD.1 + PAYOUT_YLD.2 + PAYOUT_YLD.3 + PAYOUT_YLD.4) / 5",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "Payout_Ratio":{
                 "Description":"Common Stock Payout Ratio",
                 "Formula":"PAY_RATIO",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 },
             "FCF_Payout_Ratio":{
                 "Description":"Free Cash Flow Payout Ratio",
                 "Formula":"COMM_PAYOUT / FCF * 100",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"Universe"
                 }
             },
             "Momentum":{
                 "6M_Return":{
                     "Description":"6-Month Price Return",
                     "Formula":"(Price - Price_6M_Ago) / Price_6M_Ago * 100",
-                    "Rounding":"3"
+                    "Rounding":"3",
+                    "Standardize":"Universe"
                     },
                 "12M_Return":{
                     "Description":"12-Month Price Return",
                     "Formula":"(Price - Price_12M_Ago) / Price_12M_Ago * 100",
-                    "Rounding":"3"
+                    "Rounding":"3",
+                    "Standardize":"Universe"
                     },
                 "24M_Return":{
                     "Description":"24-Month Price Return",
                     "Formula":"(Price - Price_24M_Ago) / Price_24M_Ago * 100",
-                    "Rounding":"3"
+                    "Rounding":"3",
+                    "Standardize":"Universe"
                     },
-                "SP_12M_Return":{
+                "SP_12M_Return.D":{
                     "Description":"SP500 12-Month Price Return",
                     "Formula":"(SP_Price - SP_12M_Ago) / SP_12M_Ago * 100",
-                    "Rounding":"3"
+                    "Rounding":"3",
+                    "Standardize":"None"
                     },
                 "12M_Excess_Return":{
                     "Description":"12-Month Excess Price Return",
                     "Formula":"EXCESS_RET_12M",
-                    "Rounding":"3"
+                    "Rounding":"3",
+                    "Standardize":"Universe"
                     },
                 "12M_Excess_Return_3Yr":{
                     "Description":"12-Month Excess Price Return 3-Year Average",
                     "Formula":"(EXCESS_RET_12M.0 + EXCESS_RET_12M.1 + EXCESS_RET_12M.2) / 3",
-                    "Rounding":"3"
+                    "Rounding":"3",
+                    "Standardize":"Universe"
                     },
                 "12M_Excess_Return_5Yr":{
                     "Description":"12-Month Excess Price Return 5-Year Average",
                     "Formula":"(EXCESS_RET_12M.0 + EXCESS_RET_12M.1 + EXCESS_RET_12M.2 + EXCESS_RET_12M.3 + EXCESS_RET_12M.4) / 5",
-                    "Rounding":"3"
+                    "Rounding":"3",
+                    "Standardize":"Universe"
                     }
             },
         "Forward":{
             "Fwd_Return_1Yr.Y":{
                 "Description":"Forward 1-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
                 "Formula":"FWD_RET_1Y",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"None"
                 },
             "Fwd_Return_3Yr.Y":{
                 "Description":"Forward 3-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
                 "Formula":"FWD_RET_3Y",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"None"
                 },
             "Fwd_Return_5Yr.Y":{
                 "Description":"Forward 5-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
                 "Formula":"FWD_RET_5Y",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"None"
                 },
             "Fwd_Excess_Return_1Yr.Y":{
                 "Description":"Forward 1-Year Annualized Total Return less S&P 500 (SPY) Annualized Total Return (Backtest Label)",
                 "Formula":"FWD_RET_1Y - SPY_FWD_RET_1Y",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"None"
                 },
             "Fwd_Excess_Return_3Yr.Y":{
                 "Description":"Forward 3-Year Annualized Total Return less S&P 500 (SPY) Annualized Total Return (Backtest Label)",
                 "Formula":"FWD_RET_3Y - SPY_FWD_RET_3Y",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"None"
                 },
             "Fwd_Excess_Return_5Yr.Y":{
                 "Description":"Forward 5-Year Annualized Total Return less S&P 500 (SPY) Annualized Total Return (Backtest Label)",
                 "Formula":"FWD_RET_5Y - SPY_FWD_RET_5Y",
-                "Rounding":"3"
+                "Rounding":"3",
+                "Standardize":"None"
                 }
             }
         },
@@ -663,6 +740,55 @@
             "API":"None",
             "Formula":"CAPX / AVG_ASSETS * 100",
             "Rounding":"3"
+        },
+        "OP_INC":{
+            "Description":"Operating Income (EBIT)",
+            "Source":"IS",
+            "API":"operatingIncome",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "TAX":{
+            "Description":"Income Tax Expense",
+            "Source":"IS",
+            "API":"incomeTaxExpense",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "PRETAX":{
+            "Description":"Income Before Tax",
+            "Source":"IS",
+            "API":"incomeBeforeTax",
+            "Formula":"/ 1_000_000",
+            "Rounding":"None"
+        },
+        "TAX_RATE":{
+            "Description":"Effective Tax Rate (TTM), bounded to 0-50%; 21% US statutory rate when pre-tax income <= 0",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"(TAX / PRETAX).clip(0, 0.5).where(PRETAX > 0, 0.21)",
+            "Rounding":"None"
+        },
+        "NOPAT":{
+            "Description":"Net Operating Profit After Tax: Operating Income x (1 - Effective Tax Rate)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"OP_INC * (1 - TAX_RATE)",
+            "Rounding":"None"
+        },
+        "TOT_INV_CAP":{
+            "Description":"Total Invested Capital: Total Debt + Shareholder Equity + Minority Interest (cash not netted)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"TOT_DEBT + EQUITY + MINORITY_INT",
+            "Rounding":"None"
+        },
+        "AVG_TOT_INV_CAP":{
+            "Description":"Average Total Invested Capital (current and year-ago)",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"(TOT_INV_CAP.0 + TOT_INV_CAP.1) / 2",
+            "Rounding":"None"
         },
         "Price":{
             "Description":"Average Close Price, 3 Trading Days Following Filing Date",

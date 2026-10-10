@@ -29,6 +29,19 @@ EXCLUSIONS_FILE = "sp500_panel_exclusions.csv"
 # A ticker whose last price is older than this is treated as no longer trading.
 DELISTED_AFTER_DAYS = 10
 
+# Data problems the automatic checks can't detect, found by reviewing the
+# audit. MANUAL_EXCLUDE: FMP's data under the ticker is a different company.
+# MANUAL_CUTOFF: FMP splices a later company onto the ticker's history after
+# this period-end date; rows after it are dropped.
+MANUAL_EXCLUDE = {
+    "SE": "Spectra Energy (merged into Enbridge 2017); FMP's SE data is Sea Limited, "
+          "which reused the ticker",
+}
+MANUAL_CUTOFF = {
+    "APC": ("2019-06-30", "Anadarko, acquired by Occidental in 2019; FMP's later APC rows "
+                          "are ARKO Petroleum, which reused the ticker"),
+}
+
 
 class IndexPanel:
 
@@ -66,7 +79,7 @@ class IndexPanel:
         membership = _get_membership()
         tickers = membership.universe(self._window_start())
         self.unresolved = membership.unresolved
-        return tickers
+        return [t for t in tickers if t not in MANUAL_EXCLUDE]
 
     def _ticker_metrics(self, ticker: str) -> dict:
         """Metrics table plus the dates the audit needs."""
@@ -133,6 +146,10 @@ class IndexPanel:
         last_period = max(r["metrics"].index.max() for r in results.values())
         frames = {t: r["metrics"][r["metrics"].index > last_period - self.n]
                   for t, r in results.items()}
+        for t, (cutoff, _) in MANUAL_CUTOFF.items():
+            if t in frames:
+                f = frames[t]
+                frames[t] = f[pd.to_datetime(f["_actual_period_end.D"]) <= pd.Timestamp(cutoff)]
 
         membership_audit = (_get_membership().audit(self._window_start())
                             if self._tickers is None else None)
@@ -193,6 +210,8 @@ class IndexPanel:
         def outcome(t):
             if not t:
                 return "excluded (unresolved)"
+            if t in MANUAL_EXCLUDE:
+                return f"excluded (manual): {MANUAL_EXCLUDE[t]}"
             if t in self.failures:
                 return f"failed: {self.failures[t]}"
             if t in self.no_member_rows:
@@ -202,6 +221,9 @@ class IndexPanel:
                         f"(lower average dollar volume)")
             if t not in in_index:
                 return "included (current member; no filing since joining the index yet)"
+            if t in MANUAL_CUTOFF:
+                cutoff, why = MANUAL_CUTOFF[t]
+                return f"included (rows after {cutoff} removed: {why})"
             return "included"
 
         audit["cik"] = audit["panel_ticker"].map(cik).fillna("")

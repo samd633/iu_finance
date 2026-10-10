@@ -41,6 +41,9 @@ MANUAL_SYMBOL_CHANGES = [
     ("2020-04-06", "ARNC", "HWM"),  # Arconic Inc. renamed Howmet Aerospace (spun off new Arconic Corp as ARNC)
 ]
 STALE_HISTORY_DAYS = 120  # warn when the history file's last row is older than this
+# A former member renamed more than this many days after leaving the index
+# must show continuous trading up to the rename (see _trading_gap).
+RENAME_GAP_DAYS = 30
 
 
 def _to_fmp_ticker(ticker: str) -> str:
@@ -64,6 +67,7 @@ class SP500Membership:
         self._symbol_changes = self._fetch_symbol_changes()
         self._dates, self._members = self._build_snapshots()
         self._alias_cache: dict[str, list[tuple]] = {}
+        self._gap_cache: dict[tuple, str | None] = {}
 
     # ------------------------------------------------------------------
     # Data loading
@@ -279,8 +283,16 @@ class SP500Membership:
             chain = self._forward_chain(s, as_of)
             t = chain[-1][0] if chain else s
             notes = []
+            left = last_day.get(s, last[s])
+            gap = (chain and s not in current and self.is_member(t, as_of)
+                   and self._trading_gap(t, left, chain[0][1]))
             if s in current:
                 panel, status = s, "current member"
+            elif gap:
+                panel, status = "", "unresolved"
+                notes.append(f"excluded: {t}'s price history has {gap}, so the "
+                             f"{s} -> {t} rename belongs to a later company reusing the "
+                             f"ticker (or a relisting after bankruptcy), not this member")
             elif chain and self.is_member(t, as_of):
                 panel, status = t, "renamed"
             elif self.is_member(s, as_of):
@@ -318,6 +330,35 @@ class SP500Membership:
         self.unresolved = {r.symbol: last[r.symbol]
                            for r in audit.itertuples() if r.status == "unresolved"}
         return audit
+
+    def _trading_gap(self, ticker: str, left: pd.Timestamp, renamed: pd.Timestamp) -> str | None:
+        """For a member renamed more than RENAME_GAP_DAYS after leaving the
+        index, check `ticker` traded continuously from `left` to `renamed`.
+        A dormant stretch means the old symbol was delisted and later reused
+        by a new listing, which FMP's symbol-change feed doesn't record
+        (e.g. Praxair's PX, reused by P10 Inc. and renamed RPC in 2026).
+        Returns a description of the gap, or None if trading was continuous."""
+        if renamed <= left + pd.Timedelta(days=RENAME_GAP_DAYS):
+            return None
+        key = (ticker, left, renamed)
+        if key not in self._gap_cache:
+            records = self._get(f"{FMP_BASE}/historical-price-eod/full", symbol=ticker,
+                                apikey=self._api_key,
+                                **{"from": (left - pd.Timedelta(days=30)).strftime("%Y-%m-%d"),
+                                   "to": renamed.strftime("%Y-%m-%d")}).json()
+            dates = pd.Series(sorted(pd.Timestamp(r["date"]) for r in records))
+            limit = pd.Timedelta(days=RENAME_GAP_DAYS)
+            if dates.empty:
+                gap = f"no prices between {left.date()} and {renamed.date()}"
+            elif dates.iloc[0] > left + limit:
+                gap = f"no prices from {left.date()} until {dates.iloc[0].date()}"
+            elif dates.diff().max() > limit:
+                i = dates.diff().idxmax()
+                gap = f"a trading gap from {dates[i - 1].date()} to {dates[i].date()}"
+            else:
+                gap = None
+            self._gap_cache[key] = gap
+        return self._gap_cache[key]
 
     def _unresolved_reason(self, symbol: str, left: pd.Timestamp, chain: list) -> str:
         """Why an index symbol can't be matched to FMP data, naming the other
