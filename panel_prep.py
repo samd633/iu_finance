@@ -20,13 +20,12 @@ Each predictor's "Direction" in metrics.JSON says which end is better:
 "Higher" or "Lower" ("None" for .Y/.D). rank() uses it so bucket 1 is always
 the best.
 """
-import json
-
 import numpy as np
 import pandas as pd
 
+from metrics_cfg import METRICS_FILE, load_metrics_cfg
+
 PANEL_FILE = "sp500_panel.csv"
-METRICS_FILE = "metrics.JSON"
 STANDARDIZE_OPTIONS = ("Sector", "Universe", "None")
 DIRECTION_OPTIONS = ("Higher", "Lower", "None")
 # Columns the panel adds in code rather than metrics.JSON (FMP_Financial._get_metrics).
@@ -98,9 +97,8 @@ class PanelPrep:
         Raises if a metric lacks the setting, uses a value not in `options`, or
         gives a target (.Y) / drop (.D) column anything but "None".
         """
-        with open(metrics_file) as f:
-            metrics = {name: cfg for group in json.load(f)["Metrics"].values()
-                       for name, cfg in group.items()}
+        metrics = {name: cfg for group in load_metrics_cfg(metrics_file)["Metrics"].values()
+                   for name, cfg in group.items()}
         settings, problems = {}, []
         for name, cfg in metrics.items():
             value = cfg.get(key)
@@ -145,12 +143,14 @@ class PanelPrep:
         return panel.set_index(["Period", "Ticker"]).sort_index()
 
     def prepare(self) -> pd.DataFrame:
-        """load() + rank(), then drop rows with no `target` value.
+        """load() + rank(), then keep only in-index rows (In_Index.D == "Y")
+        with a `target` value.
 
         Rows are dropped after ranking so bucket breakpoints don't depend on
         which companies later have a forward return (e.g. acquired ones).
         """
         panel = self.rank(self.load())
+        panel = panel[panel["In_Index.D"].eq("Y")]
         if self.target is not None:
             panel = panel[panel[self.target].notna()]
         return panel

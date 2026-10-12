@@ -217,27 +217,29 @@
                 "Standardize":"Sector",
                 "Direction":"Higher"
                 },
-            "PEG_3Yr":{
-                "Description":"P/E to 3-Year EPS CAGR (%); NaN if EPS <= 0 or CAGR <= 0",
-                "Formula":"(PE / EPS_CAGR_3Y).where(EPS_CAGR_3Y > 0)",
-                "Rounding":"3",
-                "Standardize":"Sector",
-                "Direction":"Lower"
-                },
-            "PEG_5Yr":{
-                "Description":"P/E to 5-Year EPS CAGR (%); NaN if EPS <= 0 or CAGR <= 0",
-                "Formula":"(PE / EPS_CAGR_5Y).where(EPS_CAGR_5Y > 0)",
-                "Rounding":"3",
-                "Standardize":"Sector",
-                "Direction":"Lower"
-                },
-            "P_E_Rel_5Yr":{
-                "Description":"P/E less its 5-Year Average (all periods in trailing 5 years, current included: 20 quarters on quarterly data); NaN if EPS <= 0 in any of them",
-                "Formula":"PE - ROLL_MEAN(PE, 5)",
-                "Rounding":"3",
-                "Standardize":"Universe",
-                "Direction":"Lower"
-                }
+            // Dropped 2026-10-11: PEG_3Yr, PEG_5Yr and P_E_Rel_5Yr had lots of missing values
+            // (~30% of in-index Technology rows; undefined when EPS or EPS CAGR <= 0).
+            // "PEG_3Yr":{
+                // "Description":"P/E to 3-Year EPS CAGR (%); NaN if EPS <= 0 or CAGR <= 0",
+                // "Formula":"(PE / EPS_CAGR_3Y).where(EPS_CAGR_3Y > 0)",
+                // "Rounding":"3",
+                // "Standardize":"Sector",
+                // "Direction":"Lower"
+                // },
+            // "PEG_5Yr":{
+                // "Description":"P/E to 5-Year EPS CAGR (%); NaN if EPS <= 0 or CAGR <= 0",
+                // "Formula":"(PE / EPS_CAGR_5Y).where(EPS_CAGR_5Y > 0)",
+                // "Rounding":"3",
+                // "Standardize":"Sector",
+                // "Direction":"Lower"
+                // },
+            // "P_E_Rel_5Yr":{
+                // "Description":"P/E less its 5-Year Average (all periods in trailing 5 years, current included: 20 quarters on quarterly data); NaN if EPS <= 0 in any of them",
+                // "Formula":"PE - ROLL_MEAN(PE, 5)",
+                // "Rounding":"3",
+                // "Standardize":"Universe",
+                // "Direction":"Lower"
+                // }
             },
         "Quality":{
             "ROE":{
@@ -345,13 +347,15 @@
                 "Standardize":"Sector",
                 "Direction":"Lower"
                 },
-            "EPS_Var_5Yr":{
-                "Description":"Earnings Per Share 5-Year Variability (Std Dev of YoY EPS Growth, %); NaN if any EPS <= 0 in window",
-                "Formula":"STDV((EPS.0 / EPS.1 - 1) * 100, (EPS.1 / EPS.2 - 1) * 100, (EPS.2 / EPS.3 - 1) * 100, (EPS.3 / EPS.4 - 1) * 100, (EPS.4 / EPS.5 - 1) * 100).where(MIN(EPS.0, EPS.1, EPS.2, EPS.3, EPS.4, EPS.5) > 0)",
-                "Rounding":"3",
-                "Standardize":"Universe",
-                "Direction":"Lower"
-                },
+            // Dropped 2026-10-11: EPS_Var_5Yr had lots of missing values
+            // (~25% of in-index Technology rows; undefined if any EPS <= 0 in the 5 years).
+            // "EPS_Var_5Yr":{
+                // "Description":"Earnings Per Share 5-Year Variability (Std Dev of YoY EPS Growth, %); NaN if any EPS <= 0 in window",
+                // "Formula":"STDV((EPS.0 / EPS.1 - 1) * 100, (EPS.1 / EPS.2 - 1) * 100, (EPS.2 / EPS.3 - 1) * 100, (EPS.3 / EPS.4 - 1) * 100, (EPS.4 / EPS.5 - 1) * 100).where(MIN(EPS.0, EPS.1, EPS.2, EPS.3, EPS.4, EPS.5) > 0)",
+                // "Rounding":"3",
+                // "Standardize":"Universe",
+                // "Direction":"Lower"
+                // },
             "Payout_YLD":{
                 "Description":"Common Stock Payout Yield",
                 "Formula":"PAYOUT_YLD",

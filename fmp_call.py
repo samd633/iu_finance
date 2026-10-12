@@ -26,13 +26,13 @@ period so cross-sectional comparisons are apples-to-apples:
     EPS_CAGR_5Yr means the same thing at either frequency.
 """
 import re
-import json
 import time
 import threading
 import requests
 import requests_cache
 import pandas as pd
 
+from metrics_cfg import load_metrics_cfg
 from sp_membership import SP500Membership
 
 FMP_BASE = "https://financialmodelingprep.com/stable"
@@ -41,8 +41,7 @@ requests_cache.install_cache('fmp_cache', expire_after=86400, allowable_codes=(2
 with open("fmp_key.txt") as f:
     API_KEY = f.read().strip()
 
-with open("metrics.JSON") as f:
-    METRICS_CFG = json.load(f)
+METRICS_CFG = load_metrics_cfg()
 
 # APIs that represent a period average/rate rather than a period flow —
 # TTM-aggregate with a rolling mean instead of a rolling sum.
