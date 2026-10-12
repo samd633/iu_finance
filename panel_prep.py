@@ -41,7 +41,8 @@ class PanelPrep:
 
     def __init__(self, tickers: list[str] | None = None, panel_file: str = PANEL_FILE,
                  exclude_sectors: tuple[str, ...] = EXCLUDED_SECTORS,
-                 sectors: list[str] | None = None, n_buckets: int = 5):
+                 sectors: list[str] | None = None, n_buckets: int = 5,
+                 target: str | None = "Fwd_Return_1Yr.Y", end_period: str | None = None):
         """
         tickers: restrict the panel to these tickers (None = all).
         panel_file: CSV written by IndexPanel.build().
@@ -51,6 +52,10 @@ class PanelPrep:
             not excluded). Applied before standardization, so cross-sectional
             statistics only use these sectors.
         n_buckets: number of percentile buckets rank() assigns (5 = quintiles).
+        target: prepare() drops rows where this ".Y" column is missing (None =
+            keep all rows).
+        end_period: last quarter kept, e.g. "2025Q2" (None = all). Ranks are
+            per period, so cutting later quarters doesn't change earlier ones.
         """
         self.tickers = [t.upper() for t in tickers] if tickers else None
         self.panel_file = panel_file
@@ -59,6 +64,10 @@ class PanelPrep:
         if n_buckets < 2:
             raise ValueError(f"n_buckets must be at least 2, got {n_buckets}")
         self.n_buckets = n_buckets
+        if target is not None and not target.endswith(".Y"):
+            raise ValueError(f"target must be a '.Y' column, got {target!r}")
+        self.target = target
+        self.end_period = pd.Period(end_period, freq="Q") if end_period else None
         if self.sectors is not None:
             clash = sorted(set(self.sectors) & set(self.exclude_sectors))
             if clash:
@@ -106,7 +115,8 @@ class PanelPrep:
 
     def load(self) -> pd.DataFrame:
         """The panel (or the requested tickers), indexed by (Period, Ticker),
-        limited to the selected sectors and without the excluded ones."""
+        limited to the selected sectors and without the excluded ones, up to
+        end_period."""
         panel = pd.read_csv(self.panel_file)
         settings = self.standardize_map()
         unknown = [c for c in panel.columns if c not in settings and c not in META_COLUMNS]
@@ -130,7 +140,20 @@ class PanelPrep:
                 raise ValueError(f"Tickers not in {self.panel_file} (or outside sectors {self.sectors}): {missing}")
             panel = panel[panel["Ticker"].isin(self.tickers)]
         panel["Period"] = pd.PeriodIndex(panel["Period"], freq="Q")
+        if self.end_period is not None:
+            panel = panel[panel["Period"] <= self.end_period]
         return panel.set_index(["Period", "Ticker"]).sort_index()
+
+    def prepare(self) -> pd.DataFrame:
+        """load() + rank(), then drop rows with no `target` value.
+
+        Rows are dropped after ranking so bucket breakpoints don't depend on
+        which companies later have a forward return (e.g. acquired ones).
+        """
+        panel = self.rank(self.load())
+        if self.target is not None:
+            panel = panel[panel[self.target].notna()]
+        return panel
 
     def standardize(self, panel: pd.DataFrame) -> pd.DataFrame:
         """Z-score each predictor per its metrics.JSON setting: (x - mean) / std
@@ -205,10 +228,12 @@ class PanelPrep:
 
 
 if __name__ == "__main__":
-    prep = PanelPrep(sectors=["Technology"])
-    df = prep.rank(prep.load())
+    prep = PanelPrep(sectors=["Technology"], end_period="2025Q2")
+    df = prep.prepare()
+    periods = df.index.get_level_values("Period")
     print(f"{len(df)} rows x {df.shape[1]} columns, "
-          f"{df.index.get_level_values('Ticker').nunique()} tickers, sectors {prep.sectors}")
+          f"{df.index.get_level_values('Ticker').nunique()} tickers, sectors {prep.sectors}, "
+          f"{periods.min()}-{periods.max()}, rows with {prep.target}")
     r_cols = [c for c in df.columns if c.endswith(".R")]
     counts = (df.loc[df["In_Index.D"].eq("Y"), r_cols].apply(lambda c: c.value_counts()).T
               .reindex(columns=range(1, prep.n_buckets + 1)).fillna(0).astype(int))
