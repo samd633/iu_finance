@@ -7,7 +7,8 @@ quarterly pandas Period so periods sort and shift correctly.
 
 Column suffixes follow fmp_call: unsuffixed = predictor, ".Y" = target,
 ".D" = drop (filters/metadata). PanelPrep adds ".R" = predictor rank bucket
-(see rank()); the original predictor columns are kept alongside.
+(see rank()) and ".F" = 1 if that rank was filled rather than actual (see
+fill_missing()); the original predictor columns are kept alongside.
 
 How each predictor is standardized is set per metric in metrics.JSON
 ("Standardize"): "Sector" = within sector each period, "Universe" = across
@@ -19,6 +20,11 @@ same result.
 Each predictor's "Direction" in metrics.JSON says which end is better:
 "Higher" or "Lower" ("None" for .Y/.D). rank() uses it so bucket 1 is always
 the best.
+
+Missing ranks are filled by fill_missing(): the bottom bucket where the
+metric's optional "Bottom_If" condition (a pandas expression over panel
+columns, e.g. "E_P <= 0" = currently loss-making) holds, the middle bucket
+otherwise.
 """
 import numpy as np
 import pandas as pd
@@ -91,6 +97,21 @@ class PanelPrep:
         return directions
 
     @staticmethod
+    def bottom_if_map(metrics_file: str = METRICS_FILE) -> dict[str, str]:
+        """{metric column: "Bottom_If" condition} for the metrics that set one.
+
+        Raises if a metric that isn't ranked (Standardize "None") sets one.
+        """
+        metrics = {name: cfg for group in load_metrics_cfg(metrics_file)["Metrics"].values()
+                   for name, cfg in group.items()}
+        rules = {name: cfg["Bottom_If"] for name, cfg in metrics.items() if "Bottom_If" in cfg}
+        standardize = PanelPrep.standardize_map(metrics_file)
+        unranked = [n for n in rules if standardize[n] == "None"]
+        if unranked:
+            raise ValueError(f"metrics.JSON: Bottom_If set on metrics that aren't ranked: {unranked}")
+        return rules
+
+    @staticmethod
     def _metric_settings(key: str, options: tuple[str, ...], metrics_file: str) -> dict[str, str]:
         """{metric column: value of `key`} from metrics.JSON.
 
@@ -144,7 +165,7 @@ class PanelPrep:
 
     def prepare(self) -> pd.DataFrame:
         """load() + rank(), then keep only in-index rows (In_Index.D == "Y")
-        with a `target` value.
+        with a `target` value, and fill_missing().
 
         Rows are dropped after ranking so bucket breakpoints don't depend on
         which companies later have a forward return (e.g. acquired ones).
@@ -153,7 +174,31 @@ class PanelPrep:
         panel = panel[panel["In_Index.D"].eq("Y")]
         if self.target is not None:
             panel = panel[panel[self.target].notna()]
-        return panel
+        return self.fill_missing(panel)
+
+    def fill_missing(self, panel: pd.DataFrame) -> pd.DataFrame:
+        """Fill missing predictor ranks ("<metric>.R"): bottom bucket
+        (n_buckets) where the metric's "Bottom_If" condition holds on that
+        row, middle bucket ((n_buckets + 1) / 2, i.e. 3 of 5) otherwise.
+
+        Adds a "<metric>.F" flag per ranked metric: 1 where the rank was
+        filled, 0 where it is the metric's actual bucket. Raw metric columns
+        and the target rank are left as they are.
+        """
+        out = panel.copy()
+        rules = self.bottom_if_map()
+        middle = (self.n_buckets + 1) / 2
+        flags = {}
+        for col in self.standardize_map():
+            name = f"{col}.R"
+            if name not in out:
+                continue
+            missing = out[name].isna()
+            bottom = out.eval(rules[col]).fillna(False).astype(bool) if col in rules else False
+            out.loc[missing & bottom, name] = self.n_buckets
+            out.loc[missing & ~bottom, name] = middle
+            flags[f"{col}.F"] = missing.astype(int)
+        return pd.concat([out, pd.DataFrame(flags, index=out.index)], axis=1)
 
     def standardize(self, panel: pd.DataFrame) -> pd.DataFrame:
         """Z-score each predictor per its metrics.JSON setting: (x - mean) / std
