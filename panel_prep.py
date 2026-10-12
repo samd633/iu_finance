@@ -182,21 +182,28 @@ class PanelPrep:
         are applied to every row of that period/group. Ties share the bucket of
         their average rank. Missing or +/-inf values get no bucket (NaN).
         Original columns are kept unchanged.
+
+        The `target` is bucketed the same way, across companies each period
+        (1 = highest return), as "<target>.R.Y" (e.g. Fwd_Return_1Yr.R.Y) so
+        it stays a ".Y" target column.
         """
         out = panel.copy()
         in_index = out["In_Index.D"].eq("Y").to_numpy()
         directions = self.direction_map()
+        jobs = [(col, f"{col}.R", keys, directions[col])
+                for cols, keys in self._groupings(out) for col in cols]
+        if self.target is not None:
+            jobs.append((self.target, f"{self.target.removesuffix('.Y')}.R.Y",
+                         [out.index.get_level_values("Period")], "Higher"))
         ranks = {}
-        for cols, keys in self._groupings(out):
-            groups = list(out.groupby(keys).indices.values())
-            for col in cols:
-                x = out[col].replace([np.inf, -np.inf], np.nan).to_numpy(dtype=float)
-                if directions[col] == "Lower":
-                    x = -x
-                buckets = np.full(len(x), np.nan)
-                for idx in groups:
-                    buckets[idx] = self._buckets(x[idx], x[idx][in_index[idx]], self.n_buckets)
-                ranks[f"{col}.R"] = buckets
+        for col, name, keys, direction in jobs:
+            x = out[col].replace([np.inf, -np.inf], np.nan).to_numpy(dtype=float)
+            if direction == "Lower":
+                x = -x
+            buckets = np.full(len(x), np.nan)
+            for idx in out.groupby(keys).indices.values():
+                buckets[idx] = self._buckets(x[idx], x[idx][in_index[idx]], self.n_buckets)
+            ranks[name] = buckets
         return pd.concat([out, pd.DataFrame(ranks, index=out.index)], axis=1)
 
     def _groupings(self, panel: pd.DataFrame) -> list[tuple[list[str], list]]:
