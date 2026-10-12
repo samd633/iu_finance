@@ -4,6 +4,7 @@ fmp_key.txt
 
 # Caches
 yfinance_cache.sqlite
+fmp_cache.sqlite
 __pycache__/
 *.pyc
 
