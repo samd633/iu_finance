@@ -11,3 +11,6 @@ __pycache__/
 # Data exports
 *.xlsx
 *.csv
+
+# Local Claude Code settings
+.claude/settings.local.json
