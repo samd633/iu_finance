@@ -62,3 +62,16 @@ To Do:
 - Adjust payout growth to be per share - Done
 - Add payout % of FCF - Done
 - Add return vs SP - Done
+
+
+=================
+
+Intl Variable Results:
+
+== TECH ==
+
+ROE (Quality)
+FCF_Payout (Quality)
+ROE_3Yr (Quality)
+ROE_5Yr (Quality)
+ROIC (Quality)
