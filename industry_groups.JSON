@@ -1,0 +1,15 @@
+// Industry roll-up groups per sector: sector -> group -> FMP industries (Industry.D).
+// Every industry of a sector listed here must be mapped to a group; sectors not
+// listed use the sector itself as their only group.
+// Technology: TWX (Media & Entertainment, an FMP mislabel) is dropped via
+// panel_prep.EXCLUDED_TICKERS, so that industry isn't mapped here.
+{
+    "Technology":{
+        "Semis":["Semiconductors"],
+        "Software":["Software - Application", "Software - Infrastructure", "Software - Services",
+                    "Electronic Gaming & Multimedia"],
+        "Hardware":["Computer Hardware", "Hardware, Equipment & Parts",
+                    "Communication Equipment", "Consumer Electronics"],
+        "IT_Services":["Information Technology Services"]
+    }
+}

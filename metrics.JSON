@@ -37,7 +37,7 @@
                 "Description":"Sustainable Growth Rate",
                 "Formula":"(ROE / 100) * (RET_RATIO / 100) * 100",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher",
                 "Bottom_If":"E_P <= 0"
                 },
@@ -45,7 +45,7 @@
                 "Description":"Internal Growth Rate",
                 "Formula":"(ROA / 100) * (RET_RATIO / 100) * 100",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher",
                 "Bottom_If":"E_P <= 0"
                 },
@@ -130,28 +130,28 @@
                 "Description":"Rate of Fixed Investment",
                 "Formula":"INV_RATE",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Lower"
                 },
             "Inv_Rate_3Yr":{
                 "Description":"Rate of Fixed Investment 3-Year Average",
                 "Formula":"(INV_RATE.0 + INV_RATE.1 + INV_RATE.2) / 3",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Lower"
                 },
             "Inv_Rate_5Yr":{
                 "Description":"Rate of Fixed Investment 5-Year Average",
                 "Formula":"(INV_RATE.0 + INV_RATE.1 + INV_RATE.2 + INV_RATE.3 + INV_RATE.4) / 5",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Lower"
                 },
             "CapX_Intensity":{
                 "Description":"Capital Expenditures as % of Cash Flow from Operations; NaN if CFO <= 0",
                 "Formula":"(CAPX / CFO * 100).where(CFO > 0)",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Lower",
                 "Bottom_If":"CFO_P <= 0"
                 },
@@ -184,49 +184,107 @@
                 "Description":"Earnings Yield (%): EPS / Price; negative for losses",
                 "Formula":"EPS / Price * 100",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher"
                 },
             "S_P":{
                 "Description":"Sales Yield (%): Sales per Share / Price",
                 "Formula":"SPS / Price * 100",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher"
                 },
             "B_P":{
                 "Description":"Book Yield (%): Book Value per Share / Price; negative for negative book equity",
                 "Formula":"BVPS / Price * 100",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher"
                 },
             "CFO_P":{
                 "Description":"Operating Cash Flow Yield (%): CFO per Share / Price",
                 "Formula":"CFOPS / Price * 100",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher"
                 },
             "FCF_P":{
                 "Description":"Free Cash Flow Yield (%): FCF per Share / Price",
                 "Formula":"FCF_PS / Price * 100",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher"
                 },
             "EBITDA_EV":{
                 "Description":"EBITDA Yield on Enterprise Value (%); NaN if EV <= 0",
                 "Formula":"(EBITDA / EV * 100).where(EV > 0)",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher"
                 },
             "CFO_EV":{
                 "Description":"Operating Cash Flow Yield on Enterprise Value (%); NaN if EV <= 0",
                 "Formula":"(CFO / EV * 100).where(EV > 0)",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
+                "Direction":"Higher"
+                },
+            "EBITDA_EV_Rel_5Yr":{
+                "Description":"EBITDA Yield on EV (%) less its 5-Year Average (all periods in trailing 5 years, current included); positive = cheaper than usual; NaN if EV <= 0 in any of them",
+                "Formula":"(EBITDA / EV * 100).where(EV > 0) - ROLL_MEAN((EBITDA / EV * 100).where(EV > 0), 5)",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Higher"
+                },
+            // Growth-adjusted yields: yield (%) x 5-Year Sales per Share CAGR (decimal),
+            // an inverse PEG on sales growth; NaN unless sales per share grew over the 5 years.
+            "E_P_G5Yr":{
+                "Description":"Earnings Yield (%) x 5-Year SPS CAGR; NaN if SPS CAGR <= 0",
+                "Formula":"((EPS / Price * 100) * ((SPS / SPS.5) ** (1/5) - 1)).where((SPS.5 > 0) & (SPS > SPS.5))",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Higher"
+                },
+            "S_P_G5Yr":{
+                "Description":"Sales Yield (%) x 5-Year SPS CAGR; NaN if SPS CAGR <= 0",
+                "Formula":"((SPS / Price * 100) * ((SPS / SPS.5) ** (1/5) - 1)).where((SPS.5 > 0) & (SPS > SPS.5))",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Higher"
+                },
+            "B_P_G5Yr":{
+                "Description":"Book Yield (%) x 5-Year SPS CAGR; NaN if SPS CAGR <= 0",
+                "Formula":"((BVPS / Price * 100) * ((SPS / SPS.5) ** (1/5) - 1)).where((SPS.5 > 0) & (SPS > SPS.5))",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Higher"
+                },
+            "CFO_P_G5Yr":{
+                "Description":"Operating Cash Flow Yield (%) x 5-Year SPS CAGR; NaN if SPS CAGR <= 0",
+                "Formula":"((CFOPS / Price * 100) * ((SPS / SPS.5) ** (1/5) - 1)).where((SPS.5 > 0) & (SPS > SPS.5))",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Higher"
+                },
+            "FCF_P_G5Yr":{
+                "Description":"Free Cash Flow Yield (%) x 5-Year SPS CAGR; NaN if SPS CAGR <= 0",
+                "Formula":"((FCF_PS / Price * 100) * ((SPS / SPS.5) ** (1/5) - 1)).where((SPS.5 > 0) & (SPS > SPS.5))",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Higher"
+                },
+            "EBITDA_EV_G5Yr":{
+                "Description":"EBITDA Yield on EV (%) x 5-Year SPS CAGR; NaN if EV <= 0 or SPS CAGR <= 0",
+                "Formula":"((EBITDA / EV * 100) * ((SPS / SPS.5) ** (1/5) - 1)).where((EV > 0) & (SPS.5 > 0) & (SPS > SPS.5))",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Higher"
+                },
+            "CFO_EV_G5Yr":{
+                "Description":"Operating Cash Flow Yield on EV (%) x 5-Year SPS CAGR; NaN if EV <= 0 or SPS CAGR <= 0",
+                "Formula":"((CFO / EV * 100) * ((SPS / SPS.5) ** (1/5) - 1)).where((EV > 0) & (SPS.5 > 0) & (SPS > SPS.5))",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
                 "Direction":"Higher"
                 },
             // Dropped 2026-10-11: PEG_3Yr, PEG_5Yr and P_E_Rel_5Yr had lots of missing values
@@ -235,14 +293,14 @@
                 // "Description":"P/E to 3-Year EPS CAGR (%); NaN if EPS <= 0 or CAGR <= 0",
                 // "Formula":"(PE / EPS_CAGR_3Y).where(EPS_CAGR_3Y > 0)",
                 // "Rounding":"3",
-                // "Standardize":"Sector",
+                // "Standardize":"Industry_Group",
                 // "Direction":"Lower"
                 // },
             // "PEG_5Yr":{
                 // "Description":"P/E to 5-Year EPS CAGR (%); NaN if EPS <= 0 or CAGR <= 0",
                 // "Formula":"(PE / EPS_CAGR_5Y).where(EPS_CAGR_5Y > 0)",
                 // "Rounding":"3",
-                // "Standardize":"Sector",
+                // "Standardize":"Industry_Group",
                 // "Direction":"Lower"
                 // },
             // "P_E_Rel_5Yr":{
@@ -356,7 +414,7 @@
                 "Description":"Debt to Equity Ratio",
                 "Formula":"(TOT_DEBT / EQUITY * 100).where(EQUITY > 0)",
                 "Rounding":"3",
-                "Standardize":"Sector",
+                "Standardize":"Industry_Group",
                 "Direction":"Lower",
                 "Bottom_If":"B_P <= 0"
                 },

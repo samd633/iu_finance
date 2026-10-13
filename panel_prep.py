@@ -11,11 +11,16 @@ Column suffixes follow fmp_call: unsuffixed = predictor, ".Y" = target,
 fill_missing()); the original predictor columns are kept alongside.
 
 How each predictor is standardized is set per metric in metrics.JSON
-("Standardize"): "Sector" = within sector each period, "Universe" = across
-all in-index companies each period, "None" = left raw (required for .Y/.D).
-"Universe" means the panel after the sector filters, so when the panel is
-limited to one sector (sectors=["Technology"]) Sector and Universe give the
-same result.
+("Standardize"): "Sector" = within sector each period, "Industry_Group" =
+within industry group each period, "Universe" = across all in-index companies
+each period, "None" = left raw (required for .Y/.D). "Universe" means the
+panel after the sector filters, so when the panel is limited to one sector
+(sectors=["Technology"]) Sector and Universe give the same result.
+
+Industry groups roll FMP industries (Industry.D) up per sector, as set in
+industry_groups.JSON; load() adds them as "Industry_Group.D". A sector with no
+entry there is one group (its sector name); a listed sector must map every
+one of its industries.
 
 Each predictor's "Direction" in metrics.JSON says which end is better:
 "Higher" or "Lower" ("None" for .Y/.D). rank() uses it so bucket 1 is always
@@ -32,7 +37,8 @@ import pandas as pd
 from metrics_cfg import METRICS_FILE, load_metrics_cfg
 
 PANEL_FILE = "sp500_panel.csv"
-STANDARDIZE_OPTIONS = ("Sector", "Universe", "None")
+INDUSTRY_GROUPS_FILE = "industry_groups.JSON"
+STANDARDIZE_OPTIONS = ("Sector", "Industry_Group", "Universe", "None")
 DIRECTION_OPTIONS = ("Higher", "Lower", "None")
 # Columns the panel adds in code rather than metrics.JSON (FMP_Financial._get_metrics).
 META_COLUMNS = ("Period", "Ticker", "_actual_period_end.D", "_offset_days.D")
@@ -40,6 +46,10 @@ META_COLUMNS = ("Period", "Ticker", "_actual_period_end.D", "_offset_days.D")
 # Sectors (FMP taxonomy, Sector.D) left out of the analysis: bank, insurer and
 # REIT accounts don't fit the EBITDA / cash-flow / capex / leverage metrics.
 EXCLUDED_SECTORS = ("Financial Services", "Real Estate")
+# Tickers left out of the analysis because FMP's sector looks wrong for them:
+# TWX (Time Warner) is tagged Technology / Media & Entertainment; to be
+# re-assigned to another sector later.
+EXCLUDED_TICKERS = ("TWX",)
 
 
 class PanelPrep:
@@ -80,7 +90,7 @@ class PanelPrep:
 
     @staticmethod
     def standardize_map(metrics_file: str = METRICS_FILE) -> dict[str, str]:
-        """{metric column: "Sector" | "Universe" | "None"} from metrics.JSON."""
+        """{metric column: "Sector" | "Industry_Group" | "Universe" | "None"} from metrics.JSON."""
         return PanelPrep._metric_settings("Standardize", STANDARDIZE_OPTIONS, metrics_file)
 
     @staticmethod
@@ -141,11 +151,12 @@ class PanelPrep:
         unknown = [c for c in panel.columns if c not in settings and c not in META_COLUMNS]
         if unknown:
             raise ValueError(f"Panel columns not defined in {METRICS_FILE} (rebuild the panel?): {unknown}")
-        excluded = panel["Sector.D"].isin(self.exclude_sectors)
+        excluded = panel["Sector.D"].isin(self.exclude_sectors) | panel["Ticker"].isin(EXCLUDED_TICKERS)
         if self.tickers is not None:
             dropped = sorted(set(self.tickers) & set(panel.loc[excluded, "Ticker"]))
             if dropped:
-                raise ValueError(f"Tickers in excluded sectors {self.exclude_sectors}: {dropped}")
+                raise ValueError(f"Tickers excluded (sectors {self.exclude_sectors} "
+                                 f"or EXCLUDED_TICKERS): {dropped}")
         panel = panel[~excluded]
         if self.sectors is not None:
             unknown = sorted(set(self.sectors) - set(panel["Sector.D"]))
@@ -158,10 +169,38 @@ class PanelPrep:
             if missing:
                 raise ValueError(f"Tickers not in {self.panel_file} (or outside sectors {self.sectors}): {missing}")
             panel = panel[panel["Ticker"].isin(self.tickers)]
+        panel["Industry_Group.D"] = self.industry_groups(panel)
         panel["Period"] = pd.PeriodIndex(panel["Period"], freq="Q")
         if self.end_period is not None:
             panel = panel[panel["Period"] <= self.end_period]
         return panel.set_index(["Period", "Ticker"]).sort_index()
+
+    @staticmethod
+    def industry_groups(panel: pd.DataFrame, groups_file: str = INDUSTRY_GROUPS_FILE) -> pd.Series:
+        """Industry group of each row per industry_groups.JSON: the group its
+        Industry.D maps to within its Sector.D, or the sector name for sectors
+        not listed there.
+
+        Raises if a listed sector has an industry not mapped to any group, or
+        an industry mapped to two groups.
+        """
+        cfg = load_metrics_cfg(groups_file)
+        lookup, problems = {}, []
+        for sector, groups in cfg.items():
+            for group, industries in groups.items():
+                for industry in industries:
+                    if (sector, industry) in lookup:
+                        problems.append(f"{sector} / {industry}: in both {lookup[sector, industry]} and {group}")
+                    lookup[sector, industry] = group
+        if problems:
+            raise ValueError(f"{groups_file}: industries mapped twice:\n  " + "\n  ".join(problems))
+        keys = list(zip(panel["Sector.D"], panel["Industry.D"]))
+        listed = panel["Sector.D"].isin(cfg).to_numpy()
+        unmapped = sorted({k for k, l in zip(keys, listed) if l and k not in lookup}, key=str)
+        if unmapped:
+            raise ValueError(f"Industries not mapped to a group in {groups_file}: "
+                             + ", ".join(f"{s} / {i}" for s, i in unmapped))
+        return pd.Series([lookup[k] if l else k[0] for k, l in zip(keys, listed)], index=panel.index)
 
     def prepare(self) -> pd.DataFrame:
         """load() + rank(), then keep only in-index rows (In_Index.D == "Y")
@@ -202,7 +241,8 @@ class PanelPrep:
 
     def standardize(self, panel: pd.DataFrame) -> pd.DataFrame:
         """Z-score each predictor per its metrics.JSON setting: (x - mean) / std
-        across companies each period, within sector for "Sector".
+        across companies each period, within sector for "Sector" and within
+        industry group for "Industry_Group".
 
         Mean and std come from in-index rows (In_Index.D == "Y") only and are
         applied to every row of that period/group. +/-inf (division by zero in
@@ -220,7 +260,7 @@ class PanelPrep:
     def rank(self, panel: pd.DataFrame) -> pd.DataFrame:
         """Add a "<metric>.R" column per predictor: its percentile bucket,
         1..n_buckets, across companies each period (within sector for "Sector"
-        metrics). 1 = best 1/n_buckets per the metric's Direction (highest
+        metrics, within industry group for "Industry_Group" metrics). 1 = best 1/n_buckets per the metric's Direction (highest
         values for "Higher", lowest for "Lower"), n_buckets = worst.
 
         Bucket breakpoints come from in-index rows (In_Index.D == "Y") only and
@@ -253,11 +293,13 @@ class PanelPrep:
 
     def _groupings(self, panel: pd.DataFrame) -> list[tuple[list[str], list]]:
         """[(predictor columns, groupby keys)] per metrics.JSON "Standardize"
-        setting: "Universe" groups by period, "Sector" by period and sector."""
+        setting: "Universe" groups by period, "Sector" by period and sector,
+        "Industry_Group" by period and industry group."""
         settings = self.standardize_map()
         period = panel.index.get_level_values("Period")
         result = []
-        for setting, keys in (("Universe", [period]), ("Sector", [period, panel["Sector.D"]])):
+        for setting, keys in (("Universe", [period]), ("Sector", [period, panel["Sector.D"]]),
+                              ("Industry_Group", [period, panel["Industry_Group.D"]])):
             cols = [c for c in panel.columns if settings.get(c) == setting]
             if cols:
                 result.append((cols, keys))
