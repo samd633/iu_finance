@@ -387,17 +387,18 @@ class FMP_Financial:
         return (period + quarters).end_time.normalize()
 
     def _get_quarter_end_prices(self, periods: pd.PeriodIndex, quarters: int,
-                                symbol: str | None = None, adjusted: bool = False) -> pd.Series:
+                                symbol: str | None = None, adjusted: bool = False,
+                                months_back: int = 0) -> pd.Series:
         """Close on the last trading day on or before the calendar quarter-end
-        `quarters` quarters after each period, indexed by period. Every company
-        is priced on the same dates, so forward returns built from these share
-        one window per period. NaN if that day is more than 7 days before the
-        quarter-end (not yet listed, stopped trading, or the date is still
-        in the future)."""
+        `quarters` quarters after each period (or the month-end `months_back`
+        months before it), indexed by period. Every company is priced on the
+        same dates, so forward returns built from these share one window per
+        period. NaN if that day is more than 7 days before the target date (not
+        yet listed, stopped trading, or the date is still in the future)."""
         daily = self._get_daily_prices(symbol, adjusted).dropna()
         result = {}
         for p in periods:
-            target = self._quarter_end(p, quarters)
+            target = self._quarter_end(p, quarters) - pd.offsets.MonthEnd(months_back)
             before = daily[daily.index <= target]
             ok = len(before) > 0 and (target - before.index[-1]).days <= 7
             result[p] = before.iloc[-1] if ok else None
@@ -536,7 +537,8 @@ class FMP_Financial:
             elif source == "PriceLookahead":
                 s = self._get_offset_prices(int(field_cfg["API"]), symbol, adjusted)
             elif source == "QuarterEndPrice":
-                frame[field_name] = self._get_quarter_end_prices(periods, int(field_cfg["API"]), symbol, adjusted)
+                frame[field_name] = self._get_quarter_end_prices(periods, int(field_cfg["API"]), symbol, adjusted,
+                                                                 int(field_cfg.get("MonthsBack", 0)))
                 continue
             elif source == "QuarterEndMembership":
                 frame[field_name] = self._get_quarter_end_membership(periods, int(field_cfg["API"]))

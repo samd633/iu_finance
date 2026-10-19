@@ -15,7 +15,7 @@ Needs Node.js (for the `docx` package) and the project's Python environment.
 
 ## Use
 
-From the project root, after running `python reports/combo_ic.py`:
+From the project root, after running `python reports/combo_ic.py` (and, for the add-on section, `python reports/factor_ic.py` and `python reports/addon_ic.py`):
 
 ```
 python reports/methodology_doc/make_doc.py
@@ -36,7 +36,8 @@ This writes `reports/<Sector>_Combo_Model_Methodology.docx`. Options:
    - `holdout_comment`: comment under the holdout table (Section 10.2)
    - `chosen_rationale`, `chosen_notes`: why the chosen models were picked
      (Section 11)
-   - `limitations`: sector-specific limitations (Section 12)
+   - `addon_notes`: commentary on the value and momentum add-on test (Section 12)
+   - `limitations`: sector-specific limitations (Section 13)
    - `dev_log`: `[change, reason]` rows for Appendix B
 3. Run `make_doc.py`.
 

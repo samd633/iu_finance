@@ -111,11 +111,29 @@ def main() -> None:
                  for m in singles.index if m.startswith("~")]
     audit = pd.read_csv(ROOT / "sp500_panel_audit.csv")["panel_status"].str.split(":").str[0].str.split(" (", regex=False).str[0]
 
+    # Value and momentum (add-on candidates): definitions plus full-sample single-metric IC from factor_ic.py.
+    factor_file = ROOT / "reports" / f"{slug.lower()}_factor_ic_{combo_ic.END_PERIOD}" / "ic_summary.csv"
+    factor = pd.read_csv(factor_file).set_index("metric") if factor_file.exists() else pd.DataFrame()
+    other = [dict(cat=group, name=name, desc=m.get("Description", ""), formula=m["Formula"], std=m["Standardize"],
+                  dir=m["Direction"], fill=float(d[f"{name}.F"].mean()),
+                  ic=float(factor.loc[name, "mean_ic"]) if name in factor.index else None,
+                  t=float(factor.loc[name, "nw_t"]) if name in factor.index else None)
+             for group in ("Value", "Momentum") for name, m in cfg.get(group, {}).items() if m["Standardize"] != "None"]
+
+    # Add-on test (reports/addon_ic.py), if it has been run.
+    addon_dir = ROOT / "reports" / f"{slug.lower()}_addon_ic_{combo_ic.END_PERIOD}"
+    addons = None
+    if (addon_dir / "addon_summary.csv").exists():
+        addons = dict(base=pd.read_csv(addon_dir / "addon_base.csv").iloc[0].to_dict(),
+                      top=pd.read_csv(addon_dir / "addon_summary.csv").head(10).replace({np.nan: None}).to_dict("records"),
+                      wf=pd.read_csv(addon_dir / "addon_wf_summary.csv").iloc[0].to_dict())
+
     def rows(name):
         return pd.read_csv(out_dir / name).replace({np.nan: None}).to_dict("records")
 
     data = dict(
         stats=stats, metrics=metrics, reversed=reversed_, audit=audit.value_counts().to_dict(),
+        other_metrics=other, addons=addons,
         results=dict(window=pd.read_csv(out_dir / "window.csv").iloc[0].to_dict(), sizes=rows("size_summary.csv"),
                      final=rows("final_models.csv"), chosen=rows("chosen.csv") if (out_dir / "chosen.csv").exists() else [],
                      candidates=rows("candidates.csv"), selection=rows("selection_summary.csv"), folds=rows("wf_folds.csv")),

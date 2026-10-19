@@ -20,16 +20,66 @@
     "**Early coverage.** Several acquired Technology companies are missing before 2016 (Section 3.6)."
   ],
   "dev_log": [
-    ["Model selection by training t-stat with same-family exclusion; top 3 per size", "Initial design; avoids double-counting one signal"],
-    ["Forward return moved from each company's filing date to common calendar quarter-end windows, starting one quarter after the period", "Companies were measured over windows staggered by up to two months; common windows compare like with like and match quarterly rebalancing"],
-    ["Panel start fixed at 2011Q4 (was the last 40 quarters)", "More history and market regimes; a stable sample between rebuilds"],
-    ["Walk-forward testing added; final models chosen on the full sample", "One holdout period is a single regime; walk-forward gives nine out-of-sample results"],
-    ["Nested rule and Bonferroni-adjusted t added", "Penalize extra metrics and the number of models searched (AIC does not apply without estimated parameters)"],
-    ["Nested threshold set to t > 0 (t > 2 tested first)", "t > 2 left no 3- or 4-metric model eligible and hurt walk-forward results"],
-    ["Reversed metrics flip actual ranks only", "Filled worst-bucket ranks were being flipped to best"],
-    ["Asset growth redefined as total-asset growth (Fama-French), with 3- and 5-year versions", "The PP&E version was distorted by the 2019 lease-accounting change"],
-    ["Investment rate, capex intensity and asset growth made one family", "Pairing two investment measures in opposite directions hedged regimes rather than measuring a coherent signal"],
-    ["3- and 5-year capex intensity, ROA and payout ratios added", "Smoother, more reliable measures; 3-year capex intensity improved the leading cash-flow model"],
-    ["Top and second choice recorded (CHOSEN)", "Selected after reviewing results; see Section 11"]
+    [
+      "Model selection by training t-stat with same-family exclusion; top 3 per size",
+      "Initial design; avoids double-counting one signal"
+    ],
+    [
+      "Forward return moved from each company's filing date to common calendar quarter-end windows, starting one quarter after the period",
+      "Companies were measured over windows staggered by up to two months; common windows compare like with like and match quarterly rebalancing"
+    ],
+    [
+      "Panel start fixed at 2011Q4 (was the last 40 quarters)",
+      "More history and market regimes; a stable sample between rebuilds"
+    ],
+    [
+      "Walk-forward testing added; final models chosen on the full sample",
+      "One holdout period is a single regime; walk-forward gives nine out-of-sample results"
+    ],
+    [
+      "Nested rule and Bonferroni-adjusted t added",
+      "Penalize extra metrics and the number of models searched (AIC does not apply without estimated parameters)"
+    ],
+    [
+      "Nested threshold set to t > 0 (t > 2 tested first)",
+      "t > 2 left no 3- or 4-metric model eligible and hurt walk-forward results"
+    ],
+    [
+      "Reversed metrics flip actual ranks only",
+      "Filled worst-bucket ranks were being flipped to best"
+    ],
+    [
+      "Asset growth redefined as total-asset growth (Fama-French), with 3- and 5-year versions",
+      "The PP&E version was distorted by the 2019 lease-accounting change"
+    ],
+    [
+      "Investment rate, capex intensity and asset growth made one family",
+      "Pairing two investment measures in opposite directions hedged regimes rather than measuring a coherent signal"
+    ],
+    [
+      "3- and 5-year capex intensity, ROA and payout ratios added",
+      "Smoother, more reliable measures; 3-year capex intensity improved the leading cash-flow model"
+    ],
+    [
+      "Top and second choice recorded (CHOSEN)",
+      "Selected after reviewing results; see Section 11"
+    ],
+    [
+      "Value and momentum priced at the quarter-end when the forward return starts (were priced at each filing date)",
+      "Signals were up to a quarter stale relative to the return window and to quarterly rebalancing"
+    ],
+    [
+      "Add-on test of value and momentum on the top choice (reports/addon_ic.py)",
+      "Check whether either adds to the chosen model; none did robustly, so the model is unchanged"
+    ],
+    [
+      "1- and 3-month momentum added (kept in metrics.JSON for later use)",
+      "Short-horizon momentum up to the start date; neither improved the model"
+    ]
+  ],
+  "addon_notes": [
+    "**No add-on is kept.** The best gains (reversed earnings yield at half weight, +0.026 IC, paired t 2.51; reversed earnings yield with 1-month momentum, +0.033, paired t 1.98) are about what the best of over a thousand tries produces by chance, and every adjusted t is zero. Choosing an add-on fold by fold lowered out-of-sample IC, and the folds picked different add-ons, a sign of noise.",
+    "**Value works in reverse in Technology.** Every add-on that helped favors more expensive stocks; cheap stocks in the conventional direction hurt, consistent with low valuations marking declining businesses in this sector. Momentum adds little: 1-month returns continue weakly (single-metric IC +0.032, not significant) and 1-month reversal hurts in every era; 3- to 24-month returns are weakly negative.",
+    "**Watch list.** Reversed earnings yield with 1-month momentum at half weight improved IC in all three eras and on the holdout, and is the add-on to re-test as more quarters accumulate."
   ]
 }

@@ -151,7 +151,7 @@ add(B("Companies with several share classes keep the one with the higher average
 add(H2("3.3 Calendarization (TTM)"));
 add(P(`Each company's fiscal quarter-end is snapped to the nearest calendar quarter-end (dropped if more than 45 days away), so all companies in a period share the same economic quarter. In the sample the median snap is ${ST.offset_med} days and the largest ${ST.offset_max}. Flow items (income statement, cash flow) are trailing-twelve-month sums; balance-sheet items are the quarter-end snapshot. \`FIELD.N\` in a formula means N years back (4N quarterly rows).`));
 add(H2("3.4 Point-in-time timing"));
-add(P("A row's financial data are used only if its report was filed with the SEC on or before the calendar quarter-end that follows the period; otherwise the row is dropped. For example, financials for the quarter ending 31 March must be filed by 30 June. The forward return starts on that date, so every predictor was public when the return period began."));
+add(P("A row's financial data are used only if its report was filed with the SEC on or before the calendar quarter-end that follows the period; otherwise the row is dropped. For example, financials for the quarter ending 31 March must be filed by 30 June. The forward return starts on that date, so every predictor was public when the return period began. Price-based metrics (value yields, momentum, payout yield) are measured on that same date: yields use the close at the start date, and momentum is the return over the 1, 3, 6, 12 or 24 months ending on it."));
 add(H2(`3.5 The ${SEC} sample`));
 add(table(["Measure", "Value"], [
   ["Company-quarter rows used", int(ST.rows)],
@@ -175,7 +175,7 @@ add(P(`Y is missing (and the row dropped) if the report was filed after the star
 add(H2("4.2 Quintile transformation"));
 add(P(`Within each quarter, the in-index companies are sorted by return and split into five equal-count groups, 1 = highest return, using the same algorithm as the predictors (Section 5.2). Bucket counts are ${Object.values(ST.y_buckets).map(int).join(", ")}. Ranking within the quarter removes the market's overall level and limits the influence of extreme winners (raw median ${ST.y_median.toFixed(1)}%, mean ${ST.y_mean.toFixed(1)}%).`));
 add(H2("4.3 Order of operations"));
-add(P("Quintile breakpoints for Y and every predictor are computed first from in-index rows of the period; rows without Y or outside the index are dropped afterwards, so breakpoints don't depend on later survival. Companies acquired within the year therefore drop out of the IC (Section 12)."));
+add(P("Quintile breakpoints for Y and every predictor are computed first from in-index rows of the period; rows without Y or outside the index are dropped afterwards, so breakpoints don't depend on later survival. Companies acquired within the year therefore drop out of the IC (Section 13)."));
 add(H2("4.4 Total vs excess return"));
 add(P(`Because every company in a quarter shares one return window, subtracting the S&P 500 (SPY) return over that window subtracts the same number from every company and leaves the ranking unchanged. Checked on the data: ${(100 * ST.excess_same).toFixed(0)}% of rows fall in the same quintile under total and excess return. The choice therefore does not affect any IC in this report.`));
 
@@ -321,7 +321,24 @@ else {
 }
 
 // ---------- 12 ----------
-add(H1("12. Limitations and review points"));
+// ---------- 12 ----------
+const AD = D.addons;
+add(H1("12. Value and momentum add-ons"));
+if (!AD) add(P("No add-on test has been run (reports/addon_ic.py)."));
+else {
+  add(P(`The top-choice model is held fixed and each Value or Momentum metric is added as an extra category, as configured or reversed ("~"), alone or one of each, at full or half the weight of the Quality and Growth categories (\`reports/addon_ic.py\`). That is ${int(AD.base.addon_models)} extended models. For each, the quarterly IC gain over the base model is tested with the paired Newey-West t, adjusted (Bonferroni) for the number of add-ons tried, by era, on the holdout split, and in walk-forward testing: each fold keeps the add-on with the best training paired t if it exceeds the nested-rule threshold.`));
+  add(EQ("Score = mean Quality + mean Growth + w × add-on bucket(s)   (w = 1 or 0.5)"));
+  add(P(`Base model: ${AD.base.model} (IC ${f3(AD.base.full_ic)}, t ${f2(AD.base.full_t)}).`));
+  const eraKeys = C.eras.map(e => "gain_" + e);
+  add(table(["Add-on", "w", "IC gain", "Paired t", "Adj. t", ...C.eras.map(e => `Gain ${e.slice(0, 4)}–${e.slice(9, 13)}`), "Holdout test gain"],
+    AD.top.map(a => [a.addon, String(a.weight), f3(a.gain), f2(a.gain_t), f2(a.gain_t_adj), ...eraKeys.map(k => f3(a[k])), f3(a.test_gain)]),
+    [2800, 500, 900, 900, 800, ...C.eras.map(() => 900), 760].map((w, i, arr) => i === 0 ? 9360 - arr.slice(1).reduce((x, y) => x + y, 0) : w),
+    { align: [L, R, R, R, R, ...C.eras.map(() => R), R], size: 16 }));
+  add(P(`Walk-forward: the fold-picked add-on gave an out-of-sample IC of ${f3(AD.wf.wf_ic_pick)} against ${f3(AD.wf.wf_ic_base)} for the base model (gain ${f3(AD.wf.wf_gain)}, t ${f2(AD.wf.wf_gain_t)}); an add-on was used in ${AD.wf.folds_with_addon} of ${AD.wf.folds} folds.`, { spacing: { before: 120, after: 120 } }));
+  (NOTES.addon_notes || []).forEach(t => add(P(t)));
+}
+
+add(H1("13. Limitations and review points"));
 add(B(`**Multiple testing.** ${int(W.combinations)} models are searched. Raw t-stats are inflated; rely on the adjusted t and the walk-forward results.`));
 add(B(`**Short, overlapping samples.** ${ST.quarters} quarters of overlapping one-year returns are about ${Math.round(ST.quarters / 4)} independent years; walk-forward covers about ${Math.round(W.wf_test_quarters / 4)}.`));
 (NOTES.limitations || []).forEach(t => add(B(t)));
@@ -332,11 +349,13 @@ if (RS.chosen.length) add(B("**Selection after review.** The chosen models were 
 add(B("**IC is not portfolio return.** It ignores position sizing, turnover and costs."));
 
 // ---------- 13 ----------
-add(H1("13. Reproducing the results"));
+add(H1("14. Reproducing the results"));
 add(P("From the project root:"));
 add(EQ("python index_panel.py          # rebuild the panel (slow)"));
 add(EQ("python reports/factor_ic.py    # single-metric IC report"));
 add(EQ("python reports/combo_ic.py     # model test, selection and all dashboard CSVs"));
+add(EQ("python reports/addon_ic.py     # value and momentum add-ons to the top choice"));
+add(EQ("python reports/methodology_doc/make_doc.py   # this document"));
 add(table(["Parameter", "Value", "Meaning"], [
   ["START_PERIOD (index_panel.py)", C.start, "First quarter of the panel"],
   ["SECTORS", JSON.stringify(C.sectors), "Sectors kept before ranking"],
@@ -372,6 +391,20 @@ app.push(H2("Quality metrics"));
 app.push(table(["Metric", "Definition and formula", "Group", "Better", "Missing → 5 if", "Filled", "Train IC", "Test IC"], Q.map(mrow), widthsA, { align: alignA, size: 16 }));
 app.push(H2("Growth metrics"));
 app.push(table(["Metric", "Definition and formula", "Group", "Better", "Missing → 5 if", "Filled", "Train IC", "Test IC"], G.map(mrow), widthsA, { align: alignA, size: 16 }));
+const orow = m => [
+  [new Paragraph({ children: [new TextRun({ text: m.name, bold: true, size: 16 })] })],
+  [new Paragraph({ children: [new TextRun({ text: m.desc, size: 16 })] }),
+   new Paragraph({ children: [new TextRun({ text: m.formula, font: MONO, size: 14, color: "4B5563" })] })],
+  m.std === "Industry_Group" ? "Industry group" : "Universe", m.dir, pct1(m.fill), m.ic == null ? "—" : f3(m.ic), m.t == null ? "—" : f2(m.t),
+];
+(D.other_metrics || []).length && ["Value", "Momentum"].forEach(grp => {
+  const rows = D.other_metrics.filter(m => m.cat === grp);
+  if (!rows.length) return;
+  app.push(H2(`${grp} metrics (add-on candidates)`));
+  app.push(table(["Metric", "Definition and formula", "Group", "Better", "Filled", "Full IC", "t"], rows.map(orow),
+    [1900, 7210, 1250, 800, 760, 880, 880], { align: [L, L, L, L, R, R, R], size: 16 }));
+});
+app.push(P("Value and momentum IC columns are single-metric results over the full sample (reports/factor_ic.py), in the configured direction."));
 app.push(H2("Reversed Growth metrics"));
 app.push(table(["Metric", "Definition", "Train IC", "Train t", "Test IC", "Test t"],
   D.reversed.map(r => [r.name, `${r.name.slice(1)} with higher values ranked better (actual ranks flipped; filled ranks kept)`, f3(r.train_ic), f2(r.train_t), f3(r.test_ic), f2(r.test_t)]),

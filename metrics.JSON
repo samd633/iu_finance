@@ -25,7 +25,7 @@
             },
         "Size":{
             "Mkt_Cap.D":{
-                "Description":"Market Capitalization at Filing ($M): 3-Day Post-Filing Avg Price x Period-End Diluted Shares",
+                "Description":"Market Capitalization ($M) at the Forward-Return Start: Quarter-End Close x Period-End Diluted Shares",
                 "Formula":"MKT_CAP",
                 "Rounding":"3",
                 "Standardize":"None",
@@ -536,6 +536,20 @@
                 }
             },
             "Momentum":{
+                "1M_Return":{
+                    "Description":"1-Month Price Return to the Forward-Return Start (Calendar Quarter-End)",
+                    "Formula":"(Price - Price_1M_Ago) / Price_1M_Ago * 100",
+                    "Rounding":"3",
+                    "Standardize":"Universe",
+                    "Direction":"Higher"
+                    },
+                "3M_Return":{
+                    "Description":"3-Month Price Return to the Forward-Return Start (Calendar Quarter-End)",
+                    "Formula":"(Price - Price_3M_Ago) / Price_3M_Ago * 100",
+                    "Rounding":"3",
+                    "Standardize":"Universe",
+                    "Direction":"Higher"
+                    },
                 "6M_Return":{
                     "Description":"6-Month Price Return",
                     "Formula":"(Price - Price_6M_Ago) / Price_6M_Ago * 100",
@@ -1005,61 +1019,76 @@
             "Rounding":"None"
         },
         "Price":{
-            "Description":"Average Close Price, 3 Trading Days Following Filing Date",
-            "Source":"Price",
-            "API":"None",
+            "Description":"Close Price, Last Trading Day On or Before the Next Calendar Quarter-End (when the forward return starts)",
+            "Source":"QuarterEndPrice",
+            "API":"1",
+            "Formula":"None",
+            "Rounding":"3"
+        },
+        "Price_1M_Ago":{
+            "Description":"Close 1 Month Before the Forward-Return Start (Month-End Before the Calendar Quarter-End)",
+            "Source":"QuarterEndPrice",
+            "API":"1",
+            "MonthsBack":"1",
+            "Formula":"None",
+            "Rounding":"3"
+        },
+        "Price_3M_Ago":{
+            "Description":"Close 3 Months Before the Forward-Return Start (Previous Calendar Quarter-End)",
+            "Source":"QuarterEndPrice",
+            "API":"0",
             "Formula":"None",
             "Rounding":"3"
         },
         "Price_6M_Ago":{
-            "Description":"Average Close, 3 Trading Days Following Date ~6 Months Before Filing Date",
-            "Source":"PriceLookback",
-            "API":"6",
+            "Description":"Close 6 Months Before the Forward-Return Start (Calendar Quarter-End)",
+            "Source":"QuarterEndPrice",
+            "API":"-1",
             "Formula":"None",
             "Rounding":"3"
         },
         "Price_12M_Ago":{
-            "Description":"Average Close, 3 Trading Days Following Date ~12 Months Before Filing Date",
-            "Source":"PriceLookback",
-            "API":"12",
+            "Description":"Close 12 Months Before the Forward-Return Start (Calendar Quarter-End)",
+            "Source":"QuarterEndPrice",
+            "API":"-3",
             "Formula":"None",
             "Rounding":"3"
         },
         "Price_24M_Ago":{
-            "Description":"Average Close, 3 Trading Days Following Date ~24 Months Before Filing Date",
-            "Source":"PriceLookback",
-            "API":"24",
+            "Description":"Close 24 Months Before the Forward-Return Start (Calendar Quarter-End)",
+            "Source":"QuarterEndPrice",
+            "API":"-7",
             "Formula":"None",
             "Rounding":"3"
         },
         "SP_Price":{
-            "Description":"S&P 500 Avg Close, 3 Trading Days Following Filing Date",
-            "Source":"Price",
-            "API":"None",
+            "Description":"S&P 500 Close at the Next Calendar Quarter-End (Forward-Return Start)",
+            "Source":"QuarterEndPrice",
+            "API":"1",
             "Symbol":"^GSPC",
             "Formula":"None",
             "Rounding":"3"
         },
         "SP_6M_Ago":{
-            "Description":"S&P 500 Average Close, 3 Trading Days Following Date ~6 Months Before Filing Date",
-            "Source":"PriceLookback",
-            "API":"6",
+            "Description":"S&P 500 Close 6 Months Before the Forward-Return Start",
+            "Source":"QuarterEndPrice",
+            "API":"-1",
             "Symbol":"^GSPC",
             "Formula":"None",
             "Rounding":"3"
         },
         "SP_12M_Ago":{
-            "Description":"S&P 500 Average Close, 3 Trading Days Following Date ~12 Months Before Filing Date",
-            "Source":"PriceLookback",
-            "API":"12",
+            "Description":"S&P 500 Close 12 Months Before the Forward-Return Start",
+            "Source":"QuarterEndPrice",
+            "API":"-3",
             "Symbol":"^GSPC",
             "Formula":"None",
             "Rounding":"3"
         },
         "SP_24M_Ago":{
-            "Description":"S&P 500 Average Close, 3 Trading Days Following Date ~24 Months Before Filing Date",
-            "Source":"PriceLookback",
-            "API":"24",
+            "Description":"S&P 500 Close 24 Months Before the Forward-Return Start",
+            "Source":"QuarterEndPrice",
+            "API":"-7",
             "Symbol":"^GSPC",
             "Formula":"None",
             "Rounding":"3"
