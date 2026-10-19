@@ -26,6 +26,8 @@ from fmp_call import FMP_Financial, _get_membership
 AUDIT_FILE = "sp500_panel_audit.csv"
 # Subset of the audit: every index symbol left out of the panel, and why.
 EXCLUSIONS_FILE = "sp500_panel_exclusions.csv"
+# First period of the panel (fixed, so the sample doesn't move as time passes).
+START_PERIOD = "2011Q4"
 # A ticker whose last price is older than this is treated as no longer trading.
 DELISTED_AFTER_DAYS = 10
 
@@ -45,17 +47,22 @@ MANUAL_CUTOFF = {
 
 class IndexPanel:
 
-    def __init__(self, n: int = 40, freq: str = "Q", workers: int = 4,
+    def __init__(self, start: str = START_PERIOD, freq: str = "Q", workers: int = 4,
                  tickers: list[str] | None = None, audit_file: str | None = AUDIT_FILE):
         """
-        n, freq: passed to FMP_Financial — periods per ticker and "Q"/"A".
+        start: first period of the panel, e.g. "2011Q4" (fixed, so rebuilds
+            keep the same sample as time passes).
+        freq: passed to FMP_Financial — "Q"/"A".
         workers: concurrent tickers to fetch (FMP rate limits are handled
             with retry/backoff in fmp_call).
         tickers: override the universe (e.g. for a quick test run); the
             audit then covers only those tickers' panel outcomes.
         audit_file: where build() writes the audit CSV (None to skip).
         """
-        self.n = n
+        self.start = pd.Period(start, freq="Q")
+        # Periods per ticker to request from FMP: start through the current period.
+        current = pd.Period(pd.Timestamp.today(), freq="Q")
+        self.n = (current - self.start).n + 1 if freq == "Q" else current.year - self.start.year + 1
         self.freq = freq
         self.workers = workers
         self._tickers = tickers
@@ -67,10 +74,9 @@ class IndexPanel:
         self.audit: pd.DataFrame | None = None
 
     def _window_start(self) -> pd.Timestamp:
-        """Start of the panel window: n periods back from today. Membership is
-        tested on filing dates, which all fall after this date."""
-        months_back = self.n * (3 if self.freq == "Q" else 12)
-        return pd.Timestamp.today() - pd.DateOffset(months=months_back)
+        """Start of the panel window: the first day of the start period.
+        Membership is tested on later quarter-ends, which all fall after it."""
+        return self.start.start_time
 
     def universe(self) -> list[str]:
         """Every ticker in the index at any point in the panel window."""
@@ -142,9 +148,8 @@ class IndexPanel:
                     print(f"  {i}/{len(tickers)} tickers ({len(self.failures)} failed)", flush=True)
 
         # Each ticker returns its own last n periods, so delisted companies
-        # reach further back; trim everyone to the panel's common n-period window.
-        last_period = max(r["metrics"].index.max() for r in results.values())
-        frames = {t: r["metrics"][r["metrics"].index > last_period - self.n]
+        # reach further back; trim everyone to the panel's window from `start`.
+        frames = {t: r["metrics"][r["metrics"].index >= self.start.asfreq(r["metrics"].index.freq)]
                   for t, r in results.items()}
         for t, (cutoff, _) in MANUAL_CUTOFF.items():
             if t in frames:

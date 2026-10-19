@@ -57,12 +57,9 @@ Revisions:
 
 To Do:
 
-- Add 3/5 yr Investment - Done
-- Add 24M Return - Done
-- Adjust payout growth to be per share - Done
-- Add payout % of FCF - Done
-- Add return vs SP - Done
-
+- 3/5 yr ROA
+- 3/5 yr Payout Ratio
+- 3/5 yr FCF_Payout_Ratio
 
 =================
 
@@ -75,3 +72,28 @@ FCF_Payout (Quality)
 ROE_3Yr (Quality)
 ROE_5Yr (Quality)
 ROIC (Quality)
+
+# Train/Split Method
+1. Test the method on several periods (walk-forward). Train on everything up to a date, test the next block,
+    then roll forward: for example train to 2019Q4 and test 2020Q4–2021Q4,
+    then train to 2020Q4 and test the next year, and so on. Keep the 3-quarter gap each time.
+    Every quarter after the first training block becomes test data once, so you get several out-of-sample
+    results across different regimes, not one.
+2. Once the method holds up, choose the final models on all the data.
+    The holdout's job is to show that the selection method works, not to fix which
+    models you finally use. After validation, run the same selection over the full
+    2016Q4–2025Q2 sample. That uses every quarter for the final choice, which is the
+    benefit you're after. The trade-off: no untouched holdout is left to judge those final picks,
+    so their expected performance comes from the walk-forward results.
+3. Add new quarters as the data come in, using the same method.
+
+#10/18 updates
+
+1. Y = quarter-end to quarter-end 1-year total return, including dividends. It starts at the quarter-end after the financials' quarter (Q1 financials → 30 June to 30 June). Rows not yet filed by the start date are dropped, and index membership is checked on the start date.
+2. The panel starts at a fixed 2011Q4, replacing the "last 40 quarters from today" rule. After the rebuild, check the audit file for coverage of companies that left the index before 2016.
+3. Walk-forward testing with a 3-quarter gap, keeping the test window about the same size. Final models are then chosen on the full sample.
+4. A penalty for model size:
+   - choose the model size out of sample, from the walk-forward results;
+   - a larger model must beat each smaller model it contains (paired Newey-West t-test on the quarterly IC differences in training, for example t > 2);
+   - report a t-stat adjusted for the number of models tried, next to the raw one.
+5. Update the methodology document and the dashboard to match.

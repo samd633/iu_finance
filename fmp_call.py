@@ -380,6 +380,44 @@ class FMP_Financial:
             for period_end, filing_date in self._get_filings()
         }).sort_index()
 
+    def _quarter_end(self, period: pd.Period, quarters: int) -> pd.Timestamp:
+        """Calendar quarter-end `quarters` quarters after `period` (quarterly panels only)."""
+        if self.freq != "Q":
+            raise ValueError("Quarter-end fields need freq='Q'")
+        return (period + quarters).end_time.normalize()
+
+    def _get_quarter_end_prices(self, periods: pd.PeriodIndex, quarters: int,
+                                symbol: str | None = None, adjusted: bool = False) -> pd.Series:
+        """Close on the last trading day on or before the calendar quarter-end
+        `quarters` quarters after each period, indexed by period. Every company
+        is priced on the same dates, so forward returns built from these share
+        one window per period. NaN if that day is more than 7 days before the
+        quarter-end (not yet listed, stopped trading, or the date is still
+        in the future)."""
+        daily = self._get_daily_prices(symbol, adjusted).dropna()
+        result = {}
+        for p in periods:
+            target = self._quarter_end(p, quarters)
+            before = daily[daily.index <= target]
+            ok = len(before) > 0 and (target - before.index[-1]).days <= 7
+            result[p] = before.iloc[-1] if ok else None
+        return pd.Series(result, dtype=float).reindex(periods)
+
+    def _get_quarter_end_membership(self, periods: pd.PeriodIndex, quarters: int) -> pd.Series:
+        """'Y'/'N' S&P 500 membership on the calendar quarter-end `quarters`
+        quarters after each period, indexed by period."""
+        membership = _get_membership()
+        return pd.Series(["Y" if membership.is_member(self.ticker, self._quarter_end(p, quarters)) else "N"
+                          for p in periods], index=periods)
+
+    def _get_filed_by(self, dates: pd.Series, quarters: int) -> pd.Series:
+        """1 if each period's report (actual period-end `dates`) was filed on or
+        before the calendar quarter-end `quarters` quarters after the period,
+        0 if filed later, NaN for periods with no report."""
+        filed = dict(self._get_filings())
+        return pd.Series([float(filed[d] <= self._quarter_end(p, quarters)) if pd.notna(d) and d in filed else None
+                          for p, d in dates.items()], index=dates.index, dtype=float)
+
     def _target_date(self, period: pd.Period) -> pd.Timestamp:
         if self.freq == "Q":
             return period.end_time.normalize()
@@ -497,6 +535,15 @@ class FMP_Financial:
                 s = self._get_offset_prices(-int(field_cfg["API"]), symbol, adjusted)
             elif source == "PriceLookahead":
                 s = self._get_offset_prices(int(field_cfg["API"]), symbol, adjusted)
+            elif source == "QuarterEndPrice":
+                frame[field_name] = self._get_quarter_end_prices(periods, int(field_cfg["API"]), symbol, adjusted)
+                continue
+            elif source == "QuarterEndMembership":
+                frame[field_name] = self._get_quarter_end_membership(periods, int(field_cfg["API"]))
+                continue
+            elif source == "FiledBy":
+                frame[field_name] = self._get_filed_by(dates, int(field_cfg["API"]))
+                continue
             elif source == "Membership":
                 s = self._get_membership()
             elif source == "Profile":

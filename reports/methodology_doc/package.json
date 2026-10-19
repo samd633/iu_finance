@@ -1,0 +1,8 @@
+{
+  "name": "methodology-doc",
+  "private": true,
+  "description": "Builds the methodology Word document for a combo_ic.py run (see make_doc.py).",
+  "dependencies": {
+    "docx": "9.0.2"
+  }
+}

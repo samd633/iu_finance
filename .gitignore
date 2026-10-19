@@ -14,3 +14,6 @@ __pycache__/
 
 # Local Claude Code settings
 .claude/settings.local.json
+
+# Node packages (reports/methodology_doc: run `npm install` there)
+node_modules/

@@ -2,7 +2,7 @@
     "Metrics":{
         "Universe":{
             "In_Index.D":{
-                "Description":"S&P 500 Member on Filing Date (Y/N)",
+                "Description":"S&P 500 Member at the Next Calendar Quarter-End, When the Forward Return Starts (Y/N)",
                 "Formula":"IN_INDEX",
                 "Rounding":"None",
                 "Standardize":"None",
@@ -155,9 +155,39 @@
                 "Direction":"Lower",
                 "Bottom_If":"CFO_P <= 0"
                 },
+            "CapX_Intensity_3Yr":{
+                "Description":"3-Year Capital Expenditures as % of 3-Year Cash Flow from Operations (cash-weighted average); NaN if 3-year CFO <= 0",
+                "Formula":"((CAPX.0 + CAPX.1 + CAPX.2) / (CFO.0 + CFO.1 + CFO.2) * 100).where((CFO.0 + CFO.1 + CFO.2) > 0)",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Lower",
+                "Bottom_If":"CFO_P <= 0"
+                },
+            "CapX_Intensity_5Yr":{
+                "Description":"5-Year Capital Expenditures as % of 5-Year Cash Flow from Operations (cash-weighted average); NaN if 5-year CFO <= 0",
+                "Formula":"((CAPX.0 + CAPX.1 + CAPX.2 + CAPX.3 + CAPX.4) / (CFO.0 + CFO.1 + CFO.2 + CFO.3 + CFO.4) * 100).where((CFO.0 + CFO.1 + CFO.2 + CFO.3 + CFO.4) > 0)",
+                "Rounding":"3",
+                "Standardize":"Industry_Group",
+                "Direction":"Lower",
+                "Bottom_If":"CFO_P <= 0"
+                },
             "Asset_G_Rate":{
-                "Description":"Rate of Fixed Asset Growth (YoY Change in Net PP&E)",
-                "Formula":"((PPE.0 / PPE.1 - 1) * 100).where(PPE.1 > 0)",
+                "Description":"Total Asset Growth (YoY Change in Total Assets; Fama-French Investment Measure)",
+                "Formula":"((ASSETS.0 / ASSETS.1 - 1) * 100).where(ASSETS.1 > 0)",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Lower"
+                },
+            "Asset_G_Rate_3Yr":{
+                "Description":"Total Asset Growth, Annualized over 3 Years",
+                "Formula":"(((ASSETS.0 / ASSETS.3) ** (1/3) - 1) * 100).where((ASSETS.0 > 0) & (ASSETS.3 > 0))",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Lower"
+                },
+            "Asset_G_Rate_5Yr":{
+                "Description":"Total Asset Growth, Annualized over 5 Years",
+                "Formula":"(((ASSETS.0 / ASSETS.5) ** (1/5) - 1) * 100).where((ASSETS.0 > 0) & (ASSETS.5 > 0))",
                 "Rounding":"3",
                 "Standardize":"Universe",
                 "Direction":"Lower"
@@ -340,6 +370,20 @@
                 "Standardize":"Universe",
                 "Direction":"Higher"
                 },
+            "ROA_3Yr":{
+                "Description":"Return on Assets 3-Year Average",
+                "Formula":"(ROA.0 + ROA.1 + ROA.2) / 3",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "ROA_5Yr":{
+                "Description":"Return on Assets 5-Year Average",
+                "Formula":"(ROA.0 + ROA.1 + ROA.2 + ROA.3 + ROA.4) / 5",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
             "ROIC":{
                 "Description":"Return on Invested Capital: NOPAT / Average Total Invested Capital (debt + equity + minority interest) (%); NaN if invested capital <= 0",
                 "Formula":"(NOPAT / AVG_TOT_INV_CAP * 100).where(AVG_TOT_INV_CAP > 0)",
@@ -455,9 +499,37 @@
                 "Standardize":"Universe",
                 "Direction":"Higher"
                 },
+            "Payout_Ratio_3Yr":{
+                "Description":"Common Stock Payout Ratio over 3 Years: 3-Year Dividends + Net Buybacks / 3-Year Earnings to Common (cash-weighted); NaN if 3-year earnings <= 0",
+                "Formula":"((COMM_PAYOUT.0 + COMM_PAYOUT.1 + COMM_PAYOUT.2) / (EARN_COMM.0 + EARN_COMM.1 + EARN_COMM.2) * 100).where((EARN_COMM.0 + EARN_COMM.1 + EARN_COMM.2) > 0)",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "Payout_Ratio_5Yr":{
+                "Description":"Common Stock Payout Ratio over 5 Years: 5-Year Dividends + Net Buybacks / 5-Year Earnings to Common (cash-weighted); NaN if 5-year earnings <= 0",
+                "Formula":"((COMM_PAYOUT.0 + COMM_PAYOUT.1 + COMM_PAYOUT.2 + COMM_PAYOUT.3 + COMM_PAYOUT.4) / (EARN_COMM.0 + EARN_COMM.1 + EARN_COMM.2 + EARN_COMM.3 + EARN_COMM.4) * 100).where((EARN_COMM.0 + EARN_COMM.1 + EARN_COMM.2 + EARN_COMM.3 + EARN_COMM.4) > 0)",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
             "FCF_Payout_Ratio":{
                 "Description":"Free Cash Flow Payout Ratio",
                 "Formula":"(COMM_PAYOUT / FCF * 100).where(FCF > 0)",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "FCF_Payout_Ratio_3Yr":{
+                "Description":"Free Cash Flow Payout Ratio over 3 Years: 3-Year Dividends + Net Buybacks / 3-Year Free Cash Flow (cash-weighted); NaN if 3-year FCF <= 0",
+                "Formula":"((COMM_PAYOUT.0 + COMM_PAYOUT.1 + COMM_PAYOUT.2) / (FCF.0 + FCF.1 + FCF.2) * 100).where((FCF.0 + FCF.1 + FCF.2) > 0)",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "FCF_Payout_Ratio_5Yr":{
+                "Description":"Free Cash Flow Payout Ratio over 5 Years: 5-Year Dividends + Net Buybacks / 5-Year Free Cash Flow (cash-weighted); NaN if 5-year FCF <= 0",
+                "Formula":"((COMM_PAYOUT.0 + COMM_PAYOUT.1 + COMM_PAYOUT.2 + COMM_PAYOUT.3 + COMM_PAYOUT.4) / (FCF.0 + FCF.1 + FCF.2 + FCF.3 + FCF.4) * 100).where((FCF.0 + FCF.1 + FCF.2 + FCF.3 + FCF.4) > 0)",
                 "Rounding":"3",
                 "Standardize":"Universe",
                 "Direction":"Higher"
@@ -516,21 +588,21 @@
             },
         "Forward":{
             "Fwd_Return_1Yr.Y":{
-                "Description":"Forward 1-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
+                "Description":"Forward 1-Year Total Return, Annualized, from the Calendar Quarter-End After the Period (Backtest Label; Uses Future Prices)",
                 "Formula":"FWD_RET_1Y",
                 "Rounding":"3",
                 "Standardize":"None",
                 "Direction":"None"
                 },
             "Fwd_Return_3Yr.Y":{
-                "Description":"Forward 3-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
+                "Description":"Forward 3-Year Total Return, Annualized, from the Calendar Quarter-End After the Period (Backtest Label; Uses Future Prices)",
                 "Formula":"FWD_RET_3Y",
                 "Rounding":"3",
                 "Standardize":"None",
                 "Direction":"None"
                 },
             "Fwd_Return_5Yr.Y":{
-                "Description":"Forward 5-Year Total Return, Annualized (Backtest Label; Uses Future Prices)",
+                "Description":"Forward 5-Year Total Return, Annualized, from the Calendar Quarter-End After the Period (Backtest Label; Uses Future Prices)",
                 "Formula":"FWD_RET_5Y",
                 "Rounding":"3",
                 "Standardize":"None",
@@ -1007,9 +1079,9 @@
             "Rounding":"None"
         },
         "IN_INDEX":{
-            "Description":"S&P 500 Member on Filing Date (Y/N), Point-in-Time",
-            "Source":"Membership",
-            "API":"None",
+            "Description":"S&P 500 Member at the Next Calendar Quarter-End, When the Forward Return Starts (Y/N), Point-in-Time",
+            "Source":"QuarterEndMembership",
+            "API":"1",
             "Formula":"None",
             "Rounding":"None"
         },
@@ -1020,114 +1092,121 @@
             "Formula":"((Price - Price_12M_Ago) / Price_12M_Ago - (SP_Price - SP_12M_Ago) / SP_12M_Ago) * 100",
             "Rounding":"3"
         },
-        "PRICE_ADJ":{
-            "Description":"Dividend-Adjusted Avg Close, 3 Trading Days Following Filing Date",
-            "Source":"Price",
-            "API":"None",
+        "FILED_BY_QE1":{
+            "Description":"1 if the period's report was filed on or before the next calendar quarter-end (when the forward return starts), else 0",
+            "Source":"FiledBy",
+            "API":"1",
+            "Formula":"None",
+            "Rounding":"None"
+        },
+        "PRICE_ADJ_QE1":{
+            "Description":"Dividend-Adjusted Close, Last Trading Day On or Before the Next Calendar Quarter-End (Forward Return Start)",
+            "Source":"QuarterEndPrice",
+            "API":"1",
             "Adjusted":"True",
             "Formula":"None",
             "Rounding":"None"
         },
-        "PRICE_ADJ_FWD_1Y":{
-            "Description":"Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~12 Months After Filing Date",
-            "Source":"PriceLookahead",
-            "API":"12",
+        "PRICE_ADJ_QE5":{
+            "Description":"Dividend-Adjusted Close, Last Trading Day On or Before the Calendar Quarter-End 1 Year After the Start",
+            "Source":"QuarterEndPrice",
+            "API":"5",
             "Adjusted":"True",
             "Formula":"None",
             "Rounding":"None"
         },
-        "PRICE_ADJ_FWD_3Y":{
-            "Description":"Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~36 Months After Filing Date",
-            "Source":"PriceLookahead",
-            "API":"36",
+        "PRICE_ADJ_QE13":{
+            "Description":"Dividend-Adjusted Close, Last Trading Day On or Before the Calendar Quarter-End 3 Years After the Start",
+            "Source":"QuarterEndPrice",
+            "API":"13",
             "Adjusted":"True",
             "Formula":"None",
             "Rounding":"None"
         },
-        "PRICE_ADJ_FWD_5Y":{
-            "Description":"Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~60 Months After Filing Date",
-            "Source":"PriceLookahead",
-            "API":"60",
+        "PRICE_ADJ_QE21":{
+            "Description":"Dividend-Adjusted Close, Last Trading Day On or Before the Calendar Quarter-End 5 Years After the Start",
+            "Source":"QuarterEndPrice",
+            "API":"21",
             "Adjusted":"True",
             "Formula":"None",
             "Rounding":"None"
         },
-        "SPY_ADJ":{
-            "Description":"SPY (S&P 500 Total Return Proxy) Dividend-Adjusted Avg Close, 3 Trading Days Following Filing Date",
-            "Source":"Price",
-            "API":"None",
+        "SPY_ADJ_QE1":{
+            "Description":"SPY (S&P 500 Total Return Proxy) Dividend-Adjusted Close, Last Trading Day On or Before the Next Calendar Quarter-End (Forward Return Start)",
+            "Source":"QuarterEndPrice",
+            "API":"1",
             "Symbol":"SPY",
             "Adjusted":"True",
             "Formula":"None",
             "Rounding":"None"
         },
-        "SPY_ADJ_FWD_1Y":{
-            "Description":"SPY Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~12 Months After Filing Date",
-            "Source":"PriceLookahead",
-            "API":"12",
+        "SPY_ADJ_QE5":{
+            "Description":"SPY (S&P 500 Total Return Proxy) Dividend-Adjusted Close, Last Trading Day On or Before the Calendar Quarter-End 1 Year After the Start",
+            "Source":"QuarterEndPrice",
+            "API":"5",
             "Symbol":"SPY",
             "Adjusted":"True",
             "Formula":"None",
             "Rounding":"None"
         },
-        "SPY_ADJ_FWD_3Y":{
-            "Description":"SPY Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~36 Months After Filing Date",
-            "Source":"PriceLookahead",
-            "API":"36",
+        "SPY_ADJ_QE13":{
+            "Description":"SPY (S&P 500 Total Return Proxy) Dividend-Adjusted Close, Last Trading Day On or Before the Calendar Quarter-End 3 Years After the Start",
+            "Source":"QuarterEndPrice",
+            "API":"13",
             "Symbol":"SPY",
             "Adjusted":"True",
             "Formula":"None",
             "Rounding":"None"
         },
-        "SPY_ADJ_FWD_5Y":{
-            "Description":"SPY Dividend-Adjusted Avg Close, 3 Trading Days Following Date ~60 Months After Filing Date",
-            "Source":"PriceLookahead",
-            "API":"60",
+        "SPY_ADJ_QE21":{
+            "Description":"SPY (S&P 500 Total Return Proxy) Dividend-Adjusted Close, Last Trading Day On or Before the Calendar Quarter-End 5 Years After the Start",
+            "Source":"QuarterEndPrice",
+            "API":"21",
             "Symbol":"SPY",
             "Adjusted":"True",
             "Formula":"None",
             "Rounding":"None"
         },
         "FWD_RET_1Y":{
-            "Description":"Forward 1-Year Total Return, Annualized (%)",
+            "Description":"Forward 1-Year Total Return, Annualized (%), Quarter-End to Quarter-End Starting the Quarter After the Period; NaN if Not Yet Filed at the Start",
             "Source":"Formula",
             "API":"None",
-            "Formula":"((PRICE_ADJ_FWD_1Y / PRICE_ADJ) ** (1/1) - 1) * 100",
+            "Formula":"(((PRICE_ADJ_QE5 / PRICE_ADJ_QE1) ** (1/1) - 1) * 100).where(FILED_BY_QE1 == 1)",
             "Rounding":"None"
         },
         "FWD_RET_3Y":{
-            "Description":"Forward 3-Year Total Return, Annualized (%)",
+            "Description":"Forward 3-Year Total Return, Annualized (%), Quarter-End to Quarter-End Starting the Quarter After the Period; NaN if Not Yet Filed at the Start",
             "Source":"Formula",
             "API":"None",
-            "Formula":"((PRICE_ADJ_FWD_3Y / PRICE_ADJ) ** (1/3) - 1) * 100",
+            "Formula":"(((PRICE_ADJ_QE13 / PRICE_ADJ_QE1) ** (1/3) - 1) * 100).where(FILED_BY_QE1 == 1)",
             "Rounding":"None"
         },
         "FWD_RET_5Y":{
-            "Description":"Forward 5-Year Total Return, Annualized (%)",
+            "Description":"Forward 5-Year Total Return, Annualized (%), Quarter-End to Quarter-End Starting the Quarter After the Period; NaN if Not Yet Filed at the Start",
             "Source":"Formula",
             "API":"None",
-            "Formula":"((PRICE_ADJ_FWD_5Y / PRICE_ADJ) ** (1/5) - 1) * 100",
+            "Formula":"(((PRICE_ADJ_QE21 / PRICE_ADJ_QE1) ** (1/5) - 1) * 100).where(FILED_BY_QE1 == 1)",
             "Rounding":"None"
         },
         "SPY_FWD_RET_1Y":{
-            "Description":"SPY Forward 1-Year Total Return, Annualized (%)",
+            "Description":"SPY Forward 1-Year Total Return, Annualized (%), Same Quarter-End Window as FWD_RET_1Y",
             "Source":"Formula",
             "API":"None",
-            "Formula":"((SPY_ADJ_FWD_1Y / SPY_ADJ) ** (1/1) - 1) * 100",
+            "Formula":"((SPY_ADJ_QE5 / SPY_ADJ_QE1) ** (1/1) - 1) * 100",
             "Rounding":"None"
         },
         "SPY_FWD_RET_3Y":{
-            "Description":"SPY Forward 3-Year Total Return, Annualized (%)",
+            "Description":"SPY Forward 3-Year Total Return, Annualized (%), Same Quarter-End Window as FWD_RET_3Y",
             "Source":"Formula",
             "API":"None",
-            "Formula":"((SPY_ADJ_FWD_3Y / SPY_ADJ) ** (1/3) - 1) * 100",
+            "Formula":"((SPY_ADJ_QE13 / SPY_ADJ_QE1) ** (1/3) - 1) * 100",
             "Rounding":"None"
         },
         "SPY_FWD_RET_5Y":{
-            "Description":"SPY Forward 5-Year Total Return, Annualized (%)",
+            "Description":"SPY Forward 5-Year Total Return, Annualized (%), Same Quarter-End Window as FWD_RET_5Y",
             "Source":"Formula",
             "API":"None",
-            "Formula":"((SPY_ADJ_FWD_5Y / SPY_ADJ) ** (1/5) - 1) * 100",
+            "Formula":"((SPY_ADJ_QE21 / SPY_ADJ_QE1) ** (1/5) - 1) * 100",
             "Rounding":"None"
         }
     }
