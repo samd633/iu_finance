@@ -59,6 +59,8 @@ def main() -> None:
             return r.where(d[f"{m[1:]}.F"].eq(1), n + 1 - r).to_numpy(float)
         return d[f"{m}.R"].to_numpy(float)
 
+    if BASE_ROLE not in CHOSEN:
+        sys.exit(f"No {BASE_ROLE!r} model for {SECTORS[0]}; add it to combo_ic.CHOSEN_BY_SECTOR first.")
     base_combo = CHOSEN[BASE_ROLE]
     q, g = (part.split(" + ") for part in base_combo.split(" | "))
     base = np.mean([bucket(m) for m in q], axis=0) + np.mean([bucket(m) for m in g], axis=0)

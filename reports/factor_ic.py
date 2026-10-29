@@ -10,9 +10,13 @@ IC on actual (unfilled) ranks only, and the median forward return by bucket.
 
 Run from the project root:
     python reports/factor_ic.py
+for Technology; set REPORT_SECTOR for another sector (PowerShell:
+$env:REPORT_SECTOR = "Healthcare"; bash: REPORT_SECTOR=Healthcare python ...).
+The same variable selects the sector in combo_ic.py and addon_ic.py.
 Writes CSVs to reports/<sector>_factor_ic_<end period>/ (CSV files are
 git-ignored; rerun to regenerate them).
 """
+import os
 import sys
 from pathlib import Path
 
@@ -25,7 +29,7 @@ sys.path.insert(0, str(ROOT))
 from metrics_cfg import load_metrics_cfg  # noqa: E402
 from panel_prep import PanelPrep  # noqa: E402
 
-SECTORS = ["Technology"]
+SECTORS = [os.environ.get("REPORT_SECTOR", "Technology")]
 END_PERIOD = "2025Q2"
 NW_LAGS = 3
 SIG_T = 2.0

@@ -15,10 +15,13 @@ Wikipedia's current constituents table:
     first post-snapshot addition date (index swaps are usually same-day).
     These are reported in `tail_notes`.
 
-Because historical tickers are as-of-date (Facebook is "FB" before
-2022-06-09, "META" after), membership for a current FMP ticker is checked
-against each of its former symbols over the window it held that symbol,
-using FMP's symbol-change history.
+Historical tickers are mixed: some rows use the symbol in use on that date
+(Facebook is "FB" before 2022-06-09, "META" after), but many companies are
+listed under a later ticker for their whole history (Zimmer as "ZBH" in 2012,
+when it traded as ZMH; Cigna as "CI" throughout). So membership for a current
+FMP ticker is checked against the symbol it held on each date (from FMP's
+symbol-change history) and, failing that, against its later symbols, unless
+that later symbol then belonged to a different company (see is_member()).
 """
 import bisect
 import io
@@ -35,11 +38,19 @@ HEADERS = {"User-Agent": "iu_finance-scraper/1.0 (personal research project)"}
 HISTORY_LOCAL = "sp500_history_local.csv"  # fallback copy of HISTORY_URL
 
 # Pure renames (same company, same SEC filer) missing from FMP's
-# symbol-change feed, as (date, old symbol, new symbol). Add entries here
-# when the panel audit shows a former member that should map to a live ticker.
+# symbol-change feed or misdated there, as (date, old symbol, new symbol); an
+# entry replaces FMP's for the same rename. Add entries here when the panel
+# audit shows a former member that should map to a live ticker.
 MANUAL_SYMBOL_CHANGES = [
     ("2020-04-06", "ARNC", "HWM"),  # Arconic Inc. renamed Howmet Aerospace (spun off new Arconic Corp as ARNC)
 ]
+# Symbols the history file uses for a different company before the given date,
+# which FMP's symbol-change feed doesn't show (the earlier holder was acquired,
+# not renamed): is_member() won't match a later company to them before then.
+RECYCLED_HISTORY_SYMBOLS = {
+    "CB": "2016-01-19",  # the old Chubb, acquired by ACE (which then took CB)
+    "DD": "2017-09-01",  # the old DuPont, merged into DowDuPont (now DD)
+}
 STALE_HISTORY_DAYS = 120  # warn when the history file's last row is older than this
 # A former member renamed more than this many days after leaving the index
 # must show continuous trading up to the rename (see _trading_gap).
@@ -67,6 +78,7 @@ class SP500Membership:
         self._symbol_changes = self._fetch_symbol_changes()
         self._dates, self._members = self._build_snapshots()
         self._alias_cache: dict[str, list[tuple]] = {}
+        self._run_cache: dict[tuple, pd.Timestamp | None] = {}
         self._gap_cache: dict[tuple, str | None] = {}
 
     # ------------------------------------------------------------------
@@ -82,8 +94,13 @@ class SP500Membership:
         records = self._get(f"{FMP_BASE}/symbol-change",
                             apikey=self._api_key, limit=100000).json()
         df = pd.DataFrame(records)[["date", "oldSymbol", "newSymbol"]]
+        # Drop malformed entries such as "CI B" -> CI and "BLVIS A" -> PEG, which
+        # would otherwise cut those companies' alias history at a bogus rename.
+        df = df[~(df["oldSymbol"].str.contains(" ") | df["newSymbol"].str.contains(" "))]
         manual = pd.DataFrame(MANUAL_SYMBOL_CHANGES, columns=["date", "oldSymbol", "newSymbol"])
-        df = pd.concat([df, manual], ignore_index=True)
+        # A manual entry replaces FMP's for the same rename: FMP now has ARNC -> HWM
+        # dated 2020-04-01, but the history file swaps the symbols on 2020-04-06.
+        df = pd.concat([df, manual], ignore_index=True).drop_duplicates(["oldSymbol", "newSymbol"], keep="last")
         df["date"] = pd.to_datetime(df["date"])
         df["oldSymbol"] = df["oldSymbol"].map(_to_fmp_ticker)
         df["newSymbol"] = df["newSymbol"].map(_to_fmp_ticker)
@@ -385,9 +402,49 @@ class SP500Membership:
         return sorted(set(audit.loc[audit["panel_ticker"] != "", "panel_ticker"]))
 
     def is_member(self, ticker: str, date) -> bool:
+        """Whether `ticker`'s company was in the index on `date`: under the
+        symbol it held then or, since the history file often lists a company
+        under a later ticker, under one of its later symbols. A later symbol
+        counts only if the history lists it without a break from `date` until
+        this company took it (a break means an earlier holder left the index
+        and the ticker was reused, e.g. TECO Energy's TE, later FREY's), and
+        not while it belonged to someone else: given up in a FMP symbol change
+        before this company took it (e.g. IR before 2020 is Trane's, not
+        Gardner Denver's), or listed in RECYCLED_HISTORY_SYMBOLS.
+        """
         date = pd.Timestamp(date)
         members = self.members_on(date)
-        for symbol, start, end in self.aliases(ticker):
+        aliases = self.aliases(ticker)
+        sc = self._symbol_changes
+        for i, (symbol, start, end) in enumerate(aliases):
             if (start is None or date >= start) and (end is None or date < end):
-                return symbol in members
+                if symbol in members:
+                    return True
+                for later, taken, _ in aliases[:i]:
+                    recycled = RECYCLED_HISTORY_SYMBOLS.get(later)
+                    since = self._listed_since(later, taken)
+                    held_by_other = (((sc["oldSymbol"] == later) & (sc["date"] > date)
+                                      & (sc["date"] <= taken)).any()
+                                     or (recycled is not None and date < pd.Timestamp(recycled)))
+                    if since is not None and date >= since and not held_by_other:
+                        return True
+                return False
         return False
+
+    def _listed_since(self, symbol: str, until: pd.Timestamp) -> pd.Timestamp | None:
+        """Start of the unbroken run of history snapshots listing `symbol` that
+        ends within RENAME_GAP_DAYS before `until` (a merger can take the
+        company out of the index a few days before its new ticker starts, as
+        Dr Pepper Snapple's did before it became KDP); None if there is none."""
+        key = (symbol, until)
+        if key not in self._run_cache:
+            i = bisect.bisect_left(self._dates, until) - 1
+            while (i >= 0 and symbol not in self._members[i]
+                   and self._dates[i] >= until - pd.Timedelta(days=RENAME_GAP_DAYS)):
+                i -= 1
+            since = None
+            while i >= 0 and symbol in self._members[i]:
+                since = self._dates[i]
+                i -= 1
+            self._run_cache[key] = since
+        return self._run_cache[key]

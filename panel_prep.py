@@ -38,6 +38,7 @@ from metrics_cfg import METRICS_FILE, load_metrics_cfg
 
 PANEL_FILE = "sp500_panel.csv"
 INDUSTRY_GROUPS_FILE = "industry_groups.JSON"
+TICKER_GROUPS_KEY = "Tickers"  # per-sector {ticker: group} entry in INDUSTRY_GROUPS_FILE
 STANDARDIZE_OPTIONS = ("Sector", "Industry_Group", "Universe", "None")
 DIRECTION_OPTIONS = ("Higher", "Lower", "None")
 # Columns the panel adds in code rather than metrics.JSON (FMP_Financial._get_metrics).
@@ -198,28 +199,43 @@ class PanelPrep:
     def industry_groups(panel: pd.DataFrame, groups_file: str = INDUSTRY_GROUPS_FILE) -> pd.Series:
         """Industry group of each row per industry_groups.JSON: the group its
         Industry.D maps to within its Sector.D, or the sector name for sectors
-        not listed there.
+        not listed there. A sector's optional "Tickers" entry ({ticker: group})
+        places single companies in a group regardless of their FMP industry.
 
-        Raises if a listed sector has an industry not mapped to any group, or
-        an industry mapped to two groups.
+        Raises if a listed sector has an industry not mapped to any group, an
+        industry mapped to two groups, or a ticker placed in an unknown group.
         """
         cfg = load_metrics_cfg(groups_file)
-        lookup, problems = {}, []
+        lookup, by_ticker, problems = {}, {}, []
         for sector, groups in cfg.items():
+            groups = dict(groups)
+            for ticker, group in groups.pop(TICKER_GROUPS_KEY, {}).items():
+                if group not in groups:
+                    problems.append(f"{sector} / {ticker}: unknown group {group!r}")
+                by_ticker[sector, ticker] = group
             for group, industries in groups.items():
                 for industry in industries:
                     if (sector, industry) in lookup:
                         problems.append(f"{sector} / {industry}: in both {lookup[sector, industry]} and {group}")
                     lookup[sector, industry] = group
         if problems:
-            raise ValueError(f"{groups_file}: industries mapped twice:\n  " + "\n  ".join(problems))
-        keys = list(zip(panel["Sector.D"], panel["Industry.D"]))
-        listed = panel["Sector.D"].isin(cfg).to_numpy()
-        unmapped = sorted({k for k, l in zip(keys, listed) if l and k not in lookup}, key=str)
+            raise ValueError(f"{groups_file}:\n  " + "\n  ".join(problems))
+        groups = []
+        unmapped = set()
+        for sector, industry, ticker in zip(panel["Sector.D"], panel["Industry.D"], panel["Ticker"]):
+            if sector not in cfg:
+                groups.append(sector)
+            elif (sector, ticker) in by_ticker:
+                groups.append(by_ticker[sector, ticker])
+            elif (sector, industry) in lookup:
+                groups.append(lookup[sector, industry])
+            else:
+                unmapped.add((sector, industry))
+                groups.append(None)
         if unmapped:
             raise ValueError(f"Industries not mapped to a group in {groups_file}: "
-                             + ", ".join(f"{s} / {i}" for s, i in unmapped))
-        return pd.Series([lookup[k] if l else k[0] for k, l in zip(keys, listed)], index=panel.index)
+                             + ", ".join(f"{s} / {i}" for s, i in sorted(unmapped, key=str)))
+        return pd.Series(groups, index=panel.index)
 
     def prepare(self) -> pd.DataFrame:
         """load() + rank(), then keep only in-index rows (In_Index.D == "Y")

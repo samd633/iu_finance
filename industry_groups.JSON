@@ -1,6 +1,8 @@
 // Industry roll-up groups per sector: sector -> group -> FMP industries (Industry.D).
 // Every industry of a sector listed here must be mapped to a group; sectors not
-// listed use the sector itself as their only group.
+// listed use the sector itself as their only group. A sector's optional
+// "Tickers" entry {ticker: group} places single companies whose FMP industry
+// doesn't match their business.
 // Technology: TWX (Media & Entertainment, an FMP mislabel) is dropped via
 // panel_prep.EXCLUDED_TICKERS, so that industry isn't mapped here. Internet
 // platforms moved in by panel_prep.SECTOR_OVERRIDES join Software.
@@ -12,5 +14,21 @@
         "Hardware":["Computer Hardware", "Hardware, Equipment & Parts",
                     "Communication Equipment", "Consumer Electronics"],
         "IT_Services":["Information Technology Services"]
+    },
+    // Healthcare: roughly the GICS industry groups. CERN (Healthcare Information
+    // Services) is moved to Technology by panel_prep.SECTOR_OVERRIDES.
+    // Tickers: clinical labs (DGX, LH) and physician services (EVHC) are services;
+    // Bio-Techne (TECH, research reagents) and Catalent (CTLT, contract drug
+    // manufacturing) are life-science tools and services.
+    "Healthcare":{
+        "Pharma_Biotech":["Drug Manufacturers - General", "Drug Manufacturers - Specialty & Generic",
+                          "Biotechnology"],
+        "Devices":["Medical - Devices", "Medical - Instruments & Supplies", "Medical - Specialties",
+                   "Medical - Equipment & Services"],
+        "Tools_Diagnostics":["Medical - Diagnostics & Research"],
+        "Services":["Medical - Healthcare Plans", "Medical - Care Facilities", "Medical - Distribution",
+                    "Medical - Pharmaceuticals"],
+        "Tickers":{"DGX":"Services", "LH":"Services", "EVHC":"Services",
+                   "TECH":"Tools_Diagnostics", "CTLT":"Tools_Diagnostics"}
     }
 }

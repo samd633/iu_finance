@@ -49,11 +49,10 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from factor_ic import NW_LAGS, nw_t  # noqa: E402
+from factor_ic import NW_LAGS, SECTORS, nw_t  # noqa: E402
 from metrics_cfg import load_metrics_cfg  # noqa: E402
 from panel_prep import PanelPrep  # noqa: E402
 
-SECTORS = ["Technology"]
 END_PERIOD = "2025Q2"
 TRAIN_END = "2020Q4"
 GAP_QUARTERS = 3
@@ -65,11 +64,14 @@ NESTED_T = 0.0            # a model must beat each smaller model it contains by 
 NESTED_T_ALTERNATIVES = (2.0, None)  # walk-forward also run with these (None = no nested rule)
 WF_FIRST_TRAIN_END = "2015Q4"
 WF_STEP = 4               # walk-forward test block and roll, in quarters
-# Models chosen for use after reviewing the results (2026-10-18); reported in chosen.csv.
-CHOSEN = {
-    "Top choice": "FCF_Payout_Ratio | CFOPS_CAGR_3Yr + ~CapX_Intensity_3Yr",
-    "Second choice": "FCF_Payout_Ratio | FCFPS_CAGR_3Yr + ~CapX_Intensity_3Yr",
+# Models chosen for use after reviewing each sector's results; reported in chosen.csv.
+CHOSEN_BY_SECTOR = {
+    "Technology": {  # 2026-10-18, kept after the 2026-10-28 reclassification
+        "Top choice": "FCF_Payout_Ratio | CFOPS_CAGR_3Yr + ~CapX_Intensity_3Yr",
+        "Second choice": "FCF_Payout_Ratio | FCFPS_CAGR_3Yr + ~CapX_Intensity_3Yr",
+    },
 }
+CHOSEN = CHOSEN_BY_SECTOR.get(SECTORS[0], {})
 ERAS = [("2011Q4-2015Q4", "2015Q4"), ("2016Q1-2020Q4", "2020Q4"), ("2021Q1-2025Q2", END_PERIOD)]
 
 
