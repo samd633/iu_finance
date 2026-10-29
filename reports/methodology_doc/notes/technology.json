@@ -1,22 +1,24 @@
 {
-  "prepared": "18 October 2026",
+  "prepared": "28 October 2026",
   "coverage": [
-    "Coverage is thinner before 2016: about 49 Technology members per quarter in 2011Q4–2015Q4, against about 75 from 2021. Part of the gap is real (the sector's weight in the index grew), but FMP has no balance sheets for several Technology companies acquired in 2012–2018, including BMC Software, CA Technologies, EMC, Molex, Tellabs, CSRA and Harman, and LSI and Novellus could not be matched to FMP tickers. These were mostly mature, profitable companies, so their absence may tilt the early-period results."
+    "Coverage is thinner before 2016: about 54 Technology members per quarter in 2011Q4\u20132015Q4, against about 80 from 2021. Part of the gap is real (the sector's weight in the index grew), but FMP has no balance sheets for several Technology companies acquired in 2012\u20132018, including BMC Software, CA Technologies, EMC, Molex, Tellabs, CSRA and Harman, and LSI and Novellus could not be matched to FMP tickers. These were mostly mature, profitable companies, so their absence may tilt the early-period results.",
+    "**Broader Technology universe.** FMP's sector labels split similar businesses inconsistently, so some companies are moved into Technology (`panel_prep.SECTOR_OVERRIDES`): the internet platforms Alphabet, Meta, Twitter, Reddit and Match (FMP: Communication Services; GICS also had them in Information Technology until 2018) and the software companies Paychex and The Trade Desk join Software, Cerner (hospital health-record software and services) joins IT Services, and Xerox joins Hardware. Payment networks and processors (Visa, Mastercard, PayPal), solar equipment makers and e-commerce companies such as Amazon stay in their FMP sectors. The reclassification added 8 companies and 263 company-quarters; the chosen models' full-sample IC was unchanged (0.087 to 0.088)."
   ],
-  "holdout_comment": "The holdout picks are weaker in the test window than the walk-forward results suggest. The single 2021–2025 test period is dominated by one regime, which is why model size and expected performance are judged on walk-forward testing instead.",
+  "holdout_comment": "The holdout picks are weaker in the test window than the walk-forward results suggest. The single 2021\u20132025 test period is dominated by one regime, which is why model size and expected performance are judged on walk-forward testing instead.",
   "chosen_rationale": [
     "**Three metrics** is the size supported by walk-forward testing (Section 9.4).",
-    "**Statistically strongest.** They are the top two 3-metric models on the full sample and the only ones with an adjusted t near 3, i.e. still significant after allowing for the number of models searched.",
-    "**Consistent across regimes.** IC is positive in every era, including 2011–2015, when profitability metrics such as ROE and ROIC predicted in reverse.",
+    "**Statistically strong.** Full-sample t-stats of 4.7 and 4.4 (adjusted t 2.0 and 1.4 after allowing for the number of models searched). After the 2026-10-28 reclassification, models built on the 5-year payout ratio rank slightly higher on the full sample, but by margins well within noise (paired t of the IC difference 0.2\u20130.7), and each has done worse than the top choice since 2021.",
+    "**Consistent across regimes.** IC is positive in every era, including 2011\u20132015, when profitability metrics such as ROE and ROIC predicted in reverse.",
     "**Reliable inputs.** All three metrics are cash-flow based (free cash flow payout, cash-flow growth, capex relative to operating cash flow), which depend less on accounting choices and are more comparable across companies than earnings-based measures.",
-    "**Smoothed capex.** The 3-year capex intensity averages out one-off spending years; it raised the t of the otherwise identical 1-year version from 4.40 to 5.14."
+    "**Smoothed capex.** The 3-year capex intensity averages out one-off spending years; it raised the t of the otherwise identical 1-year version from 4.09 to 4.72."
   ],
   "chosen_notes": [
     "**Top vs second choice.** The two are statistically level and share two of three metrics, so they rank companies similarly. The top choice uses operating cash-flow growth, which keeps growth separate from investment; the second uses free-cash-flow growth, which already subtracts capex, so capex enters the second model twice. The second choice has the milder worst year and the clearest gain over its 2-metric parts.",
-    "**A diversifying alternative.** FCF_Payout_Ratio | CFOPS_CAGR_3Yr + Asset_G_Rate_5Yr (low 5-year total-asset growth, the Fama-French direction) is the most stable model in 2011–2015 and has the mildest worst year, but a weaker adjusted t. It could serve as a check that behaves differently from the chosen pair."
+    "**A diversifying alternative.** FCF_Payout_Ratio | CFOPS_CAGR_3Yr + Asset_G_Rate_5Yr (low 5-year total-asset growth, the Fama-French direction) is the most stable model in 2011\u20132015 and has the mildest worst year, but a weaker adjusted t. It could serve as a check that behaves differently from the chosen pair.",
+    "**Alphabet and Meta.** The top choice scores both well, mainly through high capex relative to operating cash flow. Without their rows its IC would be 0.124 rather than 0.137 in 2021\u20132025, and 0.043 rather than 0.031 in 2011\u20132015: they add volatility, not average IC."
   ],
   "limitations": [
-    "**Regime dependence.** Profitability metrics reversed in 2011–2015 and asset growth reversed in 2021–2025. The chosen models were stable across eras, but there is no guarantee the next regime will behave like the past ones.",
+    "**Regime dependence.** Profitability metrics reversed in 2011\u20132015 and asset growth changed sign after 2015. The chosen models were stable across eras, but there is no guarantee the next regime will behave like the past ones. Part of the top choice's recent strength comes from rewarding the heavy data-centre capex of Alphabet and Meta.",
     "**Early coverage.** Several acquired Technology companies are missing before 2016 (Section 3.6)."
   ],
   "dev_log": [
@@ -75,11 +77,15 @@
     [
       "1- and 3-month momentum added (kept in metrics.JSON for later use)",
       "Short-horizon momentum up to the start date; neither improved the model"
+    ],
+    [
+      "Internet platforms, Cerner, Xerox, Paychex and The Trade Desk moved into Technology (panel_prep.SECTOR_OVERRIDES); chosen models kept",
+      "FMP's sectors split similar businesses inconsistently; after the re-run the chosen models' IC was unchanged and no alternative was significantly better"
     ]
   ],
   "addon_notes": [
-    "**No add-on is kept.** The best gains (reversed earnings yield at half weight, +0.026 IC, paired t 2.51; reversed earnings yield with 1-month momentum, +0.033, paired t 1.98) are about what the best of over a thousand tries produces by chance, and every adjusted t is zero. Choosing an add-on fold by fold lowered out-of-sample IC, and the folds picked different add-ons, a sign of noise.",
-    "**Value works in reverse in Technology.** Every add-on that helped favors more expensive stocks; cheap stocks in the conventional direction hurt, consistent with low valuations marking declining businesses in this sector. Momentum adds little: 1-month returns continue weakly (single-metric IC +0.032, not significant) and 1-month reversal hurts in every era; 3- to 24-month returns are weakly negative.",
+    "**No add-on is kept.** The best gains (reversed earnings yield at half weight, +0.024 IC, paired t 2.05; reversed earnings yield with 1-month momentum, +0.026, paired t 1.50) are about what the best of over a thousand tries produces by chance, and every adjusted t is zero. Choosing an add-on fold by fold lowered out-of-sample IC, and the folds picked different add-ons, a sign of noise.",
+    "**Value works in reverse in Technology.** Every add-on that helped favors more expensive stocks; cheap stocks in the conventional direction hurt, consistent with low valuations marking declining businesses in this sector. Momentum adds little: 1-month returns continue weakly (single-metric IC +0.023, not significant) and 1-month reversal hurts; 3- to 24-month returns are weakly negative.",
     "**Watch list.** Reversed earnings yield with 1-month momentum at half weight improved IC in all three eras and on the holdout, and is the add-on to re-test as more quarters accumulate."
   ]
 }

@@ -147,6 +147,8 @@ add(P("Each row carries `In_Index.D` = Y if the company was an index member on t
 add(P(`Of the index symbols in the window, ${D.audit.included} are included, ${D.audit.failed} failed (FMP has no balance-sheet data for them), ${D.audit.excluded} are excluded (unresolved tickers or FMP data for a different company) and ${D.audit.dropped} are dropped (ticker reused, no membership in the window, or a second share class). Every outcome is recorded in \`sp500_panel_audit.csv\` and \`sp500_panel_exclusions.csv\`. Other exclusions:`));
 add(B("Financial Services and Real Estate sectors: bank, insurer and REIT accounts don't fit the EBITDA, cash-flow, capex and leverage metrics."));
 if (C.excluded_tickers.length) add(B(`Tickers whose FMP sector looks wrong (\`panel_prep.EXCLUDED_TICKERS\`): ${C.excluded_tickers.join(", ")}.`));
+const moved = Object.keys(C.sector_overrides || {});
+if (moved.length) add(B(`Tickers moved into ${C.sector} from another FMP sector (\`panel_prep.SECTOR_OVERRIDES\`): ${moved.join(", ")}.`));
 add(B("Companies with several share classes keep the one with the higher average daily dollar volume."));
 add(H2("3.3 Calendarization (TTM)"));
 add(P(`Each company's fiscal quarter-end is snapped to the nearest calendar quarter-end (dropped if more than 45 days away), so all companies in a period share the same economic quarter. In the sample the median snap is ${ST.offset_med} days and the largest ${ST.offset_max}. Flow items (income statement, cash flow) are trailing-twelve-month sums; balance-sheet items are the quarter-end snapshot. \`FIELD.N\` in a formula means N years back (4N quarterly rows).`));

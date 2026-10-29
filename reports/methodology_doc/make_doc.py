@@ -34,7 +34,7 @@ import combo_ic  # noqa: E402
 from factor_ic import NW_LAGS  # noqa: E402
 from index_panel import START_PERIOD  # noqa: E402
 from metrics_cfg import load_metrics_cfg  # noqa: E402
-from panel_prep import EXCLUDED_TICKERS, INDUSTRY_GROUPS_FILE, PanelPrep  # noqa: E402
+from panel_prep import EXCLUDED_TICKERS, INDUSTRY_GROUPS_FILE, SECTOR_OVERRIDES, PanelPrep  # noqa: E402
 
 
 def quarter_end(p: pd.Period) -> str:
@@ -149,6 +149,7 @@ def main() -> None:
             max_per_cat=combo_ic.MAX_PER_CATEGORY, top_n=combo_ic.TOP_N, candidates=combo_ic.CANDIDATES,
             investment_family=list(combo_ic.INVESTMENT_FAMILY), nw_lags=NW_LAGS,
             eras=[name for name, _ in combo_ic.ERAS], excluded_tickers=list(EXCLUDED_TICKERS),
+            sector_overrides={t: s for t, (s, _) in SECTOR_OVERRIDES.items() if s in sectors},
             groups_text=groups_text(sectors), out_dir=out_dir.relative_to(ROOT).as_posix(),
             today=date.today().strftime("%d %B %Y").lstrip("0"),
         ),

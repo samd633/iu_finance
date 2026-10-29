@@ -50,6 +50,23 @@ EXCLUDED_SECTORS = ("Financial Services", "Real Estate")
 # TWX (Time Warner) is tagged Technology / Media & Entertainment; to be
 # re-assigned to another sector later.
 EXCLUDED_TICKERS = ("TWX",)
+# Tickers moved to another sector (and industry) before any filtering, where
+# FMP's sector doesn't match the business: ticker -> (Sector.D, Industry.D).
+# Internet platforms (ad- and subscription-funded software) are tagged
+# Communication Services / Internet Content & Information; GICS also had them
+# in Information Technology until 2018. DASH (same FMP industry) is a delivery
+# marketplace and stays where it is. CERN (Cerner, hospital health-record
+# software and services) and XRX (Xerox, copiers/printers; GICS Technology
+# Hardware) join the Technology groups that match their businesses, as do
+# PAYX (Paychex, payroll/HR software; peer of ADP, already Technology) and TTD
+# (The Trade Desk, ad-buying software platform).
+SECTOR_OVERRIDES = {
+    **{ticker: ("Technology", "Internet Content & Information")
+       for ticker in ("GOOGL", "META", "TWTR", "RDDT", "MTCH", "AABA")},
+    **{ticker: ("Technology", "Software - Application") for ticker in ("PAYX", "TTD")},
+    "CERN": ("Technology", "Information Technology Services"),
+    "XRX": ("Technology", "Computer Hardware"),
+}
 
 
 class PanelPrep:
@@ -144,13 +161,15 @@ class PanelPrep:
 
     def load(self) -> pd.DataFrame:
         """The panel (or the requested tickers), indexed by (Period, Ticker),
-        limited to the selected sectors and without the excluded ones, up to
-        end_period."""
+        with SECTOR_OVERRIDES applied, limited to the selected sectors and
+        without the excluded ones, up to end_period."""
         panel = pd.read_csv(self.panel_file)
         settings = self.standardize_map()
         unknown = [c for c in panel.columns if c not in settings and c not in META_COLUMNS]
         if unknown:
             raise ValueError(f"Panel columns not defined in {METRICS_FILE} (rebuild the panel?): {unknown}")
+        moved = panel["Ticker"].isin(SECTOR_OVERRIDES)
+        panel.loc[moved, ["Sector.D", "Industry.D"]] = [SECTOR_OVERRIDES[t] for t in panel.loc[moved, "Ticker"]]
         excluded = panel["Sector.D"].isin(self.exclude_sectors) | panel["Ticker"].isin(EXCLUDED_TICKERS)
         if self.tickers is not None:
             dropped = sorted(set(self.tickers) & set(panel.loc[excluded, "Ticker"]))
