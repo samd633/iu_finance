@@ -34,7 +34,7 @@ import combo_ic  # noqa: E402
 from factor_ic import NW_LAGS  # noqa: E402
 from index_panel import START_PERIOD  # noqa: E402
 from metrics_cfg import load_metrics_cfg  # noqa: E402
-from panel_prep import EXCLUDED_TICKERS, INDUSTRY_GROUPS_FILE, SECTOR_OVERRIDES, PanelPrep  # noqa: E402
+from panel_prep import EXCLUDED_TICKERS, INDUSTRY_GROUPS_FILE, SECTOR_OVERRIDES, TICKER_GROUPS_KEY, PanelPrep  # noqa: E402
 
 
 def quarter_end(p: pd.Period) -> str:
@@ -49,7 +49,12 @@ def groups_text(sectors: list[str]) -> str:
         if sector not in cfg:
             parts.append(f"{sector} is a single industry group (not listed in industry_groups.JSON)")
         else:
-            parts.append("; ".join(f"{g.replace('_', ' ')} ({', '.join(inds)})" for g, inds in cfg[sector].items()))
+            groups = dict(cfg[sector])
+            tickers = groups.pop(TICKER_GROUPS_KEY, {})
+            text = "; ".join(f"{g.replace('_', ' ')} ({', '.join(inds)})" for g, inds in groups.items())
+            if tickers:
+                text += ". Placed by ticker: " + ", ".join(f"{t} in {g.replace('_', ' ')}" for t, g in tickers.items())
+            parts.append(text)
     return "Industry groups roll FMP industries up as defined in `industry_groups.JSON`: " + "; ".join(parts) + "."
 
 
@@ -120,13 +125,15 @@ def main() -> None:
                   t=float(factor.loc[name, "nw_t"]) if name in factor.index else None)
              for group in ("Value", "Momentum") for name, m in cfg.get(group, {}).items() if m["Standardize"] != "None"]
 
-    # Add-on test (reports/addon_ic.py), if it has been run.
-    addon_dir = ROOT / "reports" / f"{slug.lower()}_addon_ic_{combo_ic.END_PERIOD}"
-    addons = None
-    if (addon_dir / "addon_summary.csv").exists():
-        addons = dict(base=pd.read_csv(addon_dir / "addon_base.csv").iloc[0].to_dict(),
-                      top=pd.read_csv(addon_dir / "addon_summary.csv").head(10).replace({np.nan: None}).to_dict("records"),
-                      wf=pd.read_csv(addon_dir / "addon_wf_summary.csv").iloc[0].to_dict())
+    # Add-on test (reports/addon_ic.py), for each chosen model it has been run on.
+    addons = []
+    for role in combo_ic.CHOSEN:
+        suffix = "" if role == "Top choice" else "_" + role.lower().replace(" ", "_")
+        addon_dir = ROOT / "reports" / f"{slug.lower()}_addon_ic_{combo_ic.END_PERIOD}{suffix}"
+        if (addon_dir / "addon_summary.csv").exists():
+            addons.append(dict(role=role, base=pd.read_csv(addon_dir / "addon_base.csv").iloc[0].to_dict(),
+                               top=pd.read_csv(addon_dir / "addon_summary.csv").head(10).replace({np.nan: None}).to_dict("records"),
+                               wf=pd.read_csv(addon_dir / "addon_wf_summary.csv").iloc[0].to_dict()))
 
     def rows(name):
         return pd.read_csv(out_dir / name).replace({np.nan: None}).to_dict("records")

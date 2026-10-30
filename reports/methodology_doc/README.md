@@ -21,6 +21,11 @@ From the project root, after running `python reports/combo_ic.py` (and, for the 
 python reports/methodology_doc/make_doc.py
 ```
 
+For another sector, set `REPORT_SECTOR` for every step (bash:
+`REPORT_SECTOR=Healthcare python ...`). Section 12 covers each chosen model
+whose add-on test has been run (`ADDON_BASE_ROLE="Second choice"` for the
+second choice).
+
 This writes `reports/<Sector>_Combo_Model_Methodology.docx`. Options:
 `--notes FILE` (default `notes/<sector>.json`) and `--out FILE`.
 

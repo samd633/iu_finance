@@ -20,8 +20,12 @@ year.
 
 Run from the project root after combo_ic.py:
     python reports/addon_ic.py
-Writes CSVs to reports/<sector>_addon_ic_<end period>/ (git-ignored).
+for the top choice; set ADDON_BASE_ROLE to test another chosen model
+(bash: ADDON_BASE_ROLE="Second choice" python ...).
+Writes CSVs to reports/<sector>_addon_ic_<end period>/ for the top choice and
+reports/<sector>_addon_ic_<end period>_<role>/ otherwise (git-ignored).
 """
+import os
 import sys
 from pathlib import Path
 
@@ -38,7 +42,7 @@ from factor_ic import nw_t  # noqa: E402
 from metrics_cfg import load_metrics_cfg  # noqa: E402
 from panel_prep import PanelPrep  # noqa: E402
 
-BASE_ROLE = "Top choice"
+BASE_ROLE = os.environ.get("ADDON_BASE_ROLE", "Top choice")
 ADDON_GROUPS = ("Value", "Momentum")
 WEIGHTS = (1.0, 0.5)
 TOP_QUARTERLY = 5  # add-on models whose quarterly IC is written out
@@ -151,7 +155,8 @@ def main() -> None:
     for i in top:
         quarterly[out.at[i, "addon"] + f" (w={out.at[i, 'weight']:g})"] = ic[1 + i]
 
-    dest = Path(__file__).resolve().parent / f"{'_'.join(SECTORS).lower()}_addon_ic_{END_PERIOD}"
+    role_suffix = "" if BASE_ROLE == "Top choice" else "_" + BASE_ROLE.lower().replace(" ", "_")
+    dest = Path(__file__).resolve().parent / f"{'_'.join(SECTORS).lower()}_addon_ic_{END_PERIOD}{role_suffix}"
     dest.mkdir(exist_ok=True)
     out.round(4).to_csv(dest / "addon_summary.csv", index=False)
     pd.DataFrame([base_row]).round(4).to_csv(dest / "addon_base.csv", index=False)

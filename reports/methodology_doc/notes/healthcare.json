@@ -1,0 +1,66 @@
+{
+  "prepared": "29 October 2026",
+  "coverage": [
+    "Healthcare has a median of 49 in-index companies per quarter in 2011Q4–2015Q4 and 63 from 2021, 81 companies in all. The four industry groups are small: a median of 16 companies per quarter in Pharma & Biotech, Devices and Services, and 9 in Tools & Diagnostics (5 in 2011Q4). Group-ranked metrics therefore have only one or two companies per quintile in Tools & Diagnostics, and finer groupings (separate biotech, insurers or distributors) would be too small to rank.",
+    "**Index membership of renamed companies.** The membership history lists some companies under a later ticker for their whole history, so before the 2026-10-28 fix renamed companies were treated as outside the index before their rename. In Healthcare this mainly affected Cigna (2011–2021) and Zimmer Biomet (2012). The fix restored 436 company-quarters across all sectors.",
+    "**Industry groups.** Groups roughly follow GICS industry groups. Five companies are placed by ticker because their FMP industry does not match their business: the clinical labs Quest Diagnostics (DGX) and Labcorp (LH) and the physician-services company Envision Healthcare (EVHC) join Services; Bio-Techne (TECH, research reagents) and Catalent (CTLT, contract drug manufacturing) join Tools & Diagnostics. Cerner, classed by FMP as Healthcare Information Services, is modelled with Technology."
+  ],
+  "holdout_comment": "Unlike Technology, the holdout picks built on ROIC and low asset growth without debt/equity did well in the test window: ROIC | Asset_G_Rate_5Yr and ROIC + FCF_Payout_Ratio_3Yr | Asset_G_Rate_5Yr reached test ICs of 0.183 and 0.192, above their training ICs. The picks with low debt/equity did worse: DEBT_EQ | Asset_G_Rate_5Yr scored −0.05 on the test window and ROIC + DEBT_EQ | Asset_G_Rate_5Yr fell from 0.170 to 0.089. Low debt/equity appeared in about 20 of the top 25 models by training t but did not hold up out of sample, and the selection rules keep it out of the final models.",
+  "chosen_rationale": [
+    "**One consistent signal.** Every leading model, in training, walk-forward testing and on the full sample, pairs a profitability measure (ROIC) with slow 5-year total-asset growth. Asset growth works in its configured, Fama-French direction here (slower growth = better), the opposite of Technology. A plausible reason is that Healthcare asset growth is driven largely by acquisitions, which tend to disappoint.",
+    "**Statistically strong.** Full-sample t-stats of 7.4 (top choice) and 7.7 (second choice), with adjusted t of 5.9 and 6.7 after allowing for the number of models searched. Both are the highest-t eligible models of their size.",
+    "**Consistent across regimes.** IC is between 0.13 and 0.19 in every era for both models, and positive in 93% (top) and 89% (second) of quarters.",
+    "**Model size.** Walk-forward testing put 2- and 3-metric models level (out-of-sample IC 0.122 and 0.116, t 4.0 and 4.2), and 4-metric models clearly worse (0.048). One model of each of the two leading sizes is kept.",
+    "**Holdout.** Both models were also among the holdout picks made on 2011Q4–2020Q4 data only, and scored 0.192 and 0.184 on 2021Q4–2025Q2."
+  ],
+  "chosen_notes": [
+    "**Top vs second choice.** The top choice adds the 3-year free-cash-flow payout ratio to the second choice's ROIC and low asset growth. It has the higher full-sample, holdout and 2021–2025 IC, and keeps a cash-flow payout component as in the Technology model. Its gain over the second choice is not significant (+0.008 IC, paired t 0.73), while ROIC does add significantly to the payout ratio (top choice vs FCF_Payout_Ratio_3Yr | Asset_G_Rate_5Yr: +0.025, paired t 2.54). The second choice is simpler and has the milder worst four-quarter stretch (0.015 against −0.002).",
+    "**Against asset growth alone.** Low 5-year asset growth is the strongest single metric in Healthcare (IC 0.147, t 5.5), and neither chosen model beats it by a significant margin over the full sample (second choice +0.012, paired t 0.51). The combinations are kept because they held up better in 2021–2025 (0.18–0.19, against 0.12 for asset growth alone) and because they do not depend on a single signal.",
+    "**Valuation ranked within industry groups.** Earnings yield (E_P) and the other valuation ratios are ranked within each industry group. Ranking E_P across the whole sector instead gave a lower IC (0.056, t 1.7, against 0.069, t 2.9) and turned negative in 2016–2020, so the within-group ranking is kept; the difference itself is not significant (paired t 0.5)."
+  ],
+  "addon_notes": [
+    "**No add-on is kept for either model.** None of the 1,052 add-on models has a paired t above 2 for either base model, and every adjusted t is zero. Choosing an add-on fold by fold lowered out-of-sample IC by 0.026 for the top choice and 0.049 for the second choice (t −3.3); early folds kept picking book-to-price, which looked strong in training and then failed.",
+    "**Value.** The best add-ons for both models are growth-adjusted valuation ratios (earnings, EBITDA, cash-flow or sales yield relative to 5-year growth) at half weight, with gains of about +0.015 IC (paired t 1.5–1.8). A further check at quarter weight and with valuation ranked across the whole sector gave at most +0.010 (paired t 2.07 for EBITDA_EV_G5Yr on the top choice, adjusted t 0). The gains point the same way across the growth-adjusted ratios but are not stable over time (for the top choice: +0.037 in 2011–2015, −0.004 in 2016–2020, +0.014 in 2021–2025). Plain earnings yield adds nothing (gain about 0 at half weight, negative at full weight): cheap Healthcare stocks are largely the profitable, slow-asset-growth companies the models already favour. The standard error of a gain is about 0.008, so a gain of 0.03 or more is ruled out, but one of about 0.01 could not be detected with this sample.",
+    "**Momentum, including short-term reversal.** Every momentum metric is tested in both directions. One-month momentum hurts in the momentum direction (−0.043 IC at full weight, paired t −3.1 on the top choice), consistent with short-term reversal, but the reversed version does not help either (−0.004 at half weight). Three- and six-month returns lose similar amounts in both directions. Reversal is mainly a one-month effect, so against a 12-month forward return it largely washes out; testing it properly would need a 1- to 3-month return and monthly rebalancing.",
+    "**Watch list.** Growth-adjusted value at quarter weight is the add-on to re-test as more quarters accumulate."
+  ],
+  "limitations": [
+    "**Small groups.** About 59 companies per quarter in all and 9 in Tools & Diagnostics; group-ranked metrics are coarse in the smallest group (Section 3.6).",
+    "**One dominant signal.** Both chosen models rely on low asset growth, which is also the strongest single metric. If that effect fades, both weaken together; the 2021–2025 IC of asset growth alone (0.12) was already below its 2011–2015 level (0.21).",
+    "**Acquisitions.** Asset growth is largely driven by acquisitions in this sector, and acquired companies drop out of the sample within the year (Section 4.3); if acquirers and targets behave differently, the asset-growth IC may be biased."
+  ],
+  "dev_log": [
+    [
+      "Methodology inherited from the Technology model (quarter-end returns from 2011Q4, walk-forward size choice, nested rule t > 0, Bonferroni-adjusted t, investment and payout families)",
+      "Same design, so results are comparable across sectors"
+    ],
+    [
+      "Index membership fixed for renamed companies (sp_membership.is_member accepts a company's later symbols)",
+      "Renamed companies such as Cigna were marked out of the index before their rename; 436 company-quarters restored"
+    ],
+    [
+      "Four Healthcare industry groups added (Pharma & Biotech, Devices, Tools & Diagnostics, Services), with DGX, LH, EVHC, TECH and CTLT placed by ticker",
+      "Valuation, investment and leverage metrics are ranked within industry groups; FMP industries mislabel a few companies"
+    ],
+    [
+      "Reports take the sector from REPORT_SECTOR; chosen models stored per sector (combo_ic.CHOSEN_BY_SECTOR)",
+      "Run the same scripts for each sector"
+    ],
+    [
+      "Earnings yield ranked across the whole sector tested against ranking within industry groups",
+      "Within-group ranking was more stable across eras; kept"
+    ],
+    [
+      "Top and second choice recorded: ROIC + FCF_Payout_Ratio_3Yr | Asset_G_Rate_5Yr and ROIC | Asset_G_Rate_5Yr",
+      "Selected after reviewing results; see Section 11"
+    ],
+    [
+      "Chosen models ranked within their own size (was 3-metric models only)",
+      "The second choice has two metrics"
+    ],
+    [
+      "Add-on test run on both chosen models (addon_ic.py takes ADDON_BASE_ROLE); extra value check at quarter weight and sector-wide ranking",
+      "Check whether value or momentum adds to either model; none did robustly, so both are unchanged"
+    ]
+  ]
+}

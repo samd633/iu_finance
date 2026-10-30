@@ -189,7 +189,7 @@ add(P("Multi-year versions follow two conventions:"));
 add(B("**Averages of a yearly ratio** for returns and margins (e.g. ROA_3Yr = mean of this year's and the previous two years' ROA)."));
 add(B("**Ratio of multi-year totals** for payout ratios and capex intensity (e.g. CapX_Intensity_3Yr = 3-year capex / 3-year operating cash flow). A year with near-zero or negative earnings or cash flow would make its own ratio explode or go missing; dividing totals weights each year by its size."));
 add(P("**Asset growth** follows Fama and French (2015): the growth in total assets, over one year or annualized over three and five years. It replaced an earlier PP&E-based definition that the 2019 lease-accounting change (ASC 842) distorted."));
-add(P(`Investment-type metrics are configured "lower is better" (the conventional investment-factor direction). Because some predicted the other way in this sample, each of the ${nRev} is also tried **reversed** ("~" prefix): ${D.reversed.map(r => r.name.slice(1)).join(", ")}.`));
+add(P(`Investment-type metrics are configured "lower is better" (the conventional investment-factor direction). Because some predicted the other way in Technology, each of the ${nRev} is also tried **reversed** ("~" prefix): ${D.reversed.map(r => r.name.slice(1)).join(", ")}.`));
 add(H2("5.2 How the quintiles are constructed"));
 add(P("For metric m in quarter t and ranking group g (`PanelPrep.rank` and `_buckets`):"));
 add(N("If the metric's direction is \"Lower\", negate the values so higher is always better.", "steps"));
@@ -197,7 +197,7 @@ add(N("The reference set is the non-missing values of in-index companies in (t, 
 add(N("Each company's average descending rank: r = (number of reference values greater than x) + (number equal to x + 1) / 2. Ties share a rank.", "steps"));
 add(N("Bucket = ceiling( r × 5 / N − 10⁻⁹ ), limited to 1..5: 1 = best 20%, 5 = worst 20%. The 10⁻⁹ keeps a value exactly on a boundary in the better bucket.", "steps"));
 add(N("Rows outside the index are bucketed against in-index breakpoints and dropped before testing.", "steps"));
-add(P(`**Ranking group.** ${D.metrics.length - groupMetrics.length} metrics are ranked across all in-index companies in the sample each quarter; ${groupMetrics.length} (${groupMetrics.map(m => m.name).join(", ")}) are ranked within each of the four industry groups, because their typical levels differ structurally between industries.`, { spacing: { before: 120, after: 120 } }));
+add(P(`**Ranking group.** ${D.metrics.length - groupMetrics.length} metrics are ranked across all in-index companies in the sample each quarter; ${groupMetrics.length} (${groupMetrics.map(m => m.name).join(", ")}) are ranked within each of the ${Object.keys(ST.groups).length} industry groups, because their typical levels differ structurally between industries.`, { spacing: { before: 120, after: 120 } }));
 add(H2("5.3 Missing values"));
 add(P("A missing rank is filled with bucket 5 (worst) if the metric's `Bottom_If` condition holds (e.g. `CFO_P <= 0`, currently burning operating cash, for cash-flow growth and capex intensity), and with bucket 3 (middle) otherwise. A flag column records every fill."));
 add(P(`Fill rates range from 0% to ${pct1(maxFill.fill)} (${maxFill.name}); Appendix A lists each one.`));
@@ -324,20 +324,27 @@ else {
 
 // ---------- 12 ----------
 // ---------- 12 ----------
-const AD = D.addons;
+const ADS = D.addons || [];
 add(H1("12. Value and momentum add-ons"));
-if (!AD) add(P("No add-on test has been run (reports/addon_ic.py)."));
+if (!ADS.length) add(P("No add-on test has been run (reports/addon_ic.py)."));
 else {
-  add(P(`The top-choice model is held fixed and each Value or Momentum metric is added as an extra category, as configured or reversed ("~"), alone or one of each, at full or half the weight of the Quality and Growth categories (\`reports/addon_ic.py\`). That is ${int(AD.base.addon_models)} extended models. For each, the quarterly IC gain over the base model is tested with the paired Newey-West t, adjusted (Bonferroni) for the number of add-ons tried, by era, on the holdout split, and in walk-forward testing: each fold keeps the add-on with the best training paired t if it exceeds the nested-rule threshold.`));
+  const bases = ADS.map(a => a.role.toLowerCase()).join(" and ");
+  add(P(`The ${bases} model${ADS.length > 1 ? "s are each" : " is"} held fixed and each Value or Momentum metric is added as an extra category, as configured or reversed ("~"), alone or one of each, at full or half the weight of the Quality and Growth categories (\`reports/addon_ic.py\`). That is ${int(ADS[0].base.addon_models)} extended models per base model. For each, the quarterly IC gain over the base model is tested with the paired Newey-West t, adjusted (Bonferroni) for the number of add-ons tried, by era, on the holdout split, and in walk-forward testing: each fold keeps the add-on with the best training paired t if it exceeds the nested-rule threshold.`));
   add(EQ("Score = mean Quality + mean Growth + w × add-on bucket(s)   (w = 1 or 0.5)"));
-  add(P(`Base model: ${AD.base.model} (IC ${f3(AD.base.full_ic)}, t ${f2(AD.base.full_t)}).`));
   const eraKeys = C.eras.map(e => "gain_" + e);
-  add(table(["Add-on", "w", "IC gain", "Paired t", "Adj. t", ...C.eras.map(e => `Gain ${e.slice(0, 4)}–${e.slice(9, 13)}`), "Holdout test gain"],
-    AD.top.map(a => [a.addon, String(a.weight), f3(a.gain), f2(a.gain_t), f2(a.gain_t_adj), ...eraKeys.map(k => f3(a[k])), f3(a.test_gain)]),
-    [2800, 500, 900, 900, 800, ...C.eras.map(() => 900), 760].map((w, i, arr) => i === 0 ? 9360 - arr.slice(1).reduce((x, y) => x + y, 0) : w),
-    { align: [L, R, R, R, R, ...C.eras.map(() => R), R], size: 16 }));
-  add(P(`Walk-forward: the fold-picked add-on gave an out-of-sample IC of ${f3(AD.wf.wf_ic_pick)} against ${f3(AD.wf.wf_ic_base)} for the base model (gain ${f3(AD.wf.wf_gain)}, t ${f2(AD.wf.wf_gain_t)}); an add-on was used in ${AD.wf.folds_with_addon} of ${AD.wf.folds} folds.`, { spacing: { before: 120, after: 120 } }));
-  (NOTES.addon_notes || []).forEach(t => add(P(t)));
+  ADS.forEach((AD, i) => {
+    if (ADS.length > 1) add(H2(`12.${i + 1} ${AD.role}`));
+    add(P(`Base model: ${AD.base.model} (IC ${f3(AD.base.full_ic)}, t ${f2(AD.base.full_t)}). The ten add-ons with the highest paired t:`));
+    add(table(["Add-on", "w", "IC gain", "Paired t", "Adj. t", ...C.eras.map(e => `Gain ${e.slice(0, 4)}–${e.slice(9, 13)}`), "Holdout test gain"],
+      AD.top.map(a => [a.addon, String(a.weight), f3(a.gain), f2(a.gain_t), f2(a.gain_t_adj), ...eraKeys.map(k => f3(a[k])), f3(a.test_gain)]),
+      [2800, 500, 900, 900, 800, ...C.eras.map(() => 900), 760].map((w, i, arr) => i === 0 ? 9360 - arr.slice(1).reduce((x, y) => x + y, 0) : w),
+      { align: [L, R, R, R, R, ...C.eras.map(() => R), R], size: 16 }));
+    add(P(`Walk-forward: the fold-picked add-on gave an out-of-sample IC of ${f3(AD.wf.wf_ic_pick)} against ${f3(AD.wf.wf_ic_base)} for the base model (gain ${f3(AD.wf.wf_gain)}, t ${f2(AD.wf.wf_gain_t)}); an add-on was used in ${AD.wf.folds_with_addon} of ${AD.wf.folds} folds.`, { spacing: { before: 120, after: 120 } }));
+  });
+  if ((NOTES.addon_notes || []).length) {
+    if (ADS.length > 1) add(H2(`12.${ADS.length + 1} Conclusions`));
+    NOTES.addon_notes.forEach(t => add(P(t)));
+  }
 }
 
 add(H1("13. Limitations and review points"));
@@ -352,15 +359,17 @@ add(B("**IC is not portfolio return.** It ignores position sizing, turnover and 
 
 // ---------- 13 ----------
 add(H1("14. Reproducing the results"));
-add(P("From the project root:"));
+const ENV = C.sectors.length === 1 && C.sectors[0] !== "Technology" ? `REPORT_SECTOR=${C.sectors[0]} ` : "";
+add(P(ENV ? `From the project root (bash; in PowerShell set $env:REPORT_SECTOR = "${C.sectors[0]}" first):` : "From the project root:"));
 add(EQ("python index_panel.py          # rebuild the panel (slow)"));
-add(EQ("python reports/factor_ic.py    # single-metric IC report"));
-add(EQ("python reports/combo_ic.py     # model test, selection and all dashboard CSVs"));
-add(EQ("python reports/addon_ic.py     # value and momentum add-ons to the top choice"));
-add(EQ("python reports/methodology_doc/make_doc.py   # this document"));
+add(EQ(`${ENV}python reports/factor_ic.py    # single-metric IC report`));
+add(EQ(`${ENV}python reports/combo_ic.py     # model test, selection and all dashboard CSVs`));
+add(EQ(`${ENV}python reports/addon_ic.py     # value and momentum add-ons to the top choice`));
+if (ADS.some(a => a.role === "Second choice")) add(EQ(`${ENV}ADDON_BASE_ROLE="Second choice" python reports/addon_ic.py   # ... and to the second choice`));
+add(EQ(`${ENV}python reports/methodology_doc/make_doc.py   # this document`));
 add(table(["Parameter", "Value", "Meaning"], [
   ["START_PERIOD (index_panel.py)", C.start, "First quarter of the panel"],
-  ["SECTORS", JSON.stringify(C.sectors), "Sectors kept before ranking"],
+  ["SECTORS", JSON.stringify(C.sectors), "Sectors kept before ranking (from REPORT_SECTOR; default Technology)"],
   ["END_PERIOD", C.end, "Last quarter used"],
   ["n_buckets", "5", "Quintiles"],
   ["target", "Fwd_Return_1Yr.Y", "Quarter-end 1-year total return"],

@@ -70,6 +70,10 @@ CHOSEN_BY_SECTOR = {
         "Top choice": "FCF_Payout_Ratio | CFOPS_CAGR_3Yr + ~CapX_Intensity_3Yr",
         "Second choice": "FCF_Payout_Ratio | FCFPS_CAGR_3Yr + ~CapX_Intensity_3Yr",
     },
+    "Healthcare": {  # 2026-10-29
+        "Top choice": "ROIC + FCF_Payout_Ratio_3Yr | Asset_G_Rate_5Yr",
+        "Second choice": "ROIC | Asset_G_Rate_5Yr",
+    },
 }
 CHOSEN = CHOSEN_BY_SECTOR.get(SECTORS[0], {})
 ERAS = [("2011Q4-2015Q4", "2015Q4"), ("2016Q1-2020Q4", "2020Q4"), ("2021Q1-2025Q2", END_PERIOD)]
@@ -240,12 +244,14 @@ def main() -> None:
 
     # Chosen models: full-sample, holdout and per-era results.
     chosen_idx = [out.index[out["combo"] == c][0] for c in CHOSEN.values()]
-    rank3 = out[(out["n_metrics"] == 3) & out["full_nested_ok"]].sort_values("full_t", ascending=False)["combo"].tolist()
+    ranked = out[out["full_nested_ok"]].sort_values("full_t", ascending=False)
+    rank_in_size = {n: g["combo"].tolist() for n, g in ranked.groupby("n_metrics")}
     chosen = out.loc[chosen_idx, ["combo", "quality", "growth", "n_metrics", "full_ic", "full_t", "full_t_adj",
                                   "train_rank", "train_ic", "train_t", "test_ic", "test_t", "test_pct_pos"]].copy()
     chosen.insert(0, "role", list(CHOSEN))
-    chosen["full_rank_size"] = [rank3.index(c) + 1 if c in rank3 else np.nan for c in chosen["combo"]]
-    chosen["full_sub_t"] = full_sub_t[chosen_idx]
+    chosen["full_rank_size"] = [rank_in_size[n].index(c) + 1 if c in rank_in_size.get(n, []) else np.nan
+                                for c, n in zip(chosen["combo"], chosen["n_metrics"])]
+    chosen["full_sub_t"] = np.where(np.isinf(full_sub_t[chosen_idx]), np.nan, full_sub_t[chosen_idx])
     chosen["full_pct_pos"] = (ic[chosen_idx] > 0).mean(axis=1)
     era_start = pidx[0]
     for name, end in ERAS:
