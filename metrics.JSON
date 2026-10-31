@@ -391,6 +391,20 @@
                 "Standardize":"Universe",
                 "Direction":"Higher"
                 },
+            "ROIC_3Yr":{
+                "Description":"Return on Invested Capital 3-Year Average",
+                "Formula":"(ROIC.0 + ROIC.1 + ROIC.2) / 3",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "ROIC_5Yr":{
+                "Description":"Return on Invested Capital 5-Year Average",
+                "Formula":"(ROIC.0 + ROIC.1 + ROIC.2 + ROIC.3 + ROIC.4) / 5",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
             "EBITDA_MGN":{
                 "Description":"EBITDA Margin",
                 "Formula":"(EBITDA / REV * 100).where(REV > 0)",
@@ -1017,6 +1031,13 @@
             "API":"None",
             "Formula":"(TOT_INV_CAP.0 + TOT_INV_CAP.1) / 2",
             "Rounding":"None"
+        },
+        "ROIC":{
+            "Description":"Return on Invested Capital",
+            "Source":"Formula",
+            "API":"None",
+            "Formula":"(NOPAT / AVG_TOT_INV_CAP * 100).where(AVG_TOT_INV_CAP > 0)",
+            "Rounding":"3"
         },
         "Price":{
             "Description":"Close Price, Last Trading Day On or Before the Next Calendar Quarter-End (when the forward return starts)",
