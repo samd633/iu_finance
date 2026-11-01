@@ -549,70 +549,70 @@
                 "Direction":"Higher"
                 }
             },
-            "Momentum":{
-                "1M_Return":{
-                    "Description":"1-Month Price Return to the Forward-Return Start (Calendar Quarter-End)",
-                    "Formula":"(Price - Price_1M_Ago) / Price_1M_Ago * 100",
-                    "Rounding":"3",
-                    "Standardize":"Universe",
-                    "Direction":"Higher"
-                    },
-                "3M_Return":{
-                    "Description":"3-Month Price Return to the Forward-Return Start (Calendar Quarter-End)",
-                    "Formula":"(Price - Price_3M_Ago) / Price_3M_Ago * 100",
-                    "Rounding":"3",
-                    "Standardize":"Universe",
-                    "Direction":"Higher"
-                    },
-                "6M_Return":{
-                    "Description":"6-Month Price Return",
-                    "Formula":"(Price - Price_6M_Ago) / Price_6M_Ago * 100",
-                    "Rounding":"3",
-                    "Standardize":"Universe",
-                    "Direction":"Higher"
-                    },
-                "12M_Return":{
-                    "Description":"12-Month Price Return",
-                    "Formula":"(Price - Price_12M_Ago) / Price_12M_Ago * 100",
-                    "Rounding":"3",
-                    "Standardize":"Universe",
-                    "Direction":"Higher"
-                    },
-                "24M_Return":{
-                    "Description":"24-Month Price Return",
-                    "Formula":"(Price - Price_24M_Ago) / Price_24M_Ago * 100",
-                    "Rounding":"3",
-                    "Standardize":"Universe",
-                    "Direction":"Higher"
-                    },
-                "SP_12M_Return.D":{
-                    "Description":"SP500 12-Month Price Return",
-                    "Formula":"(SP_Price - SP_12M_Ago) / SP_12M_Ago * 100",
-                    "Rounding":"3",
-                    "Standardize":"None",
-                    "Direction":"None"
-                    },
-                "12M_Excess_Return":{
-                    "Description":"12-Month Excess Price Return",
-                    "Formula":"EXCESS_RET_12M",
-                    "Rounding":"3",
-                    "Standardize":"Universe",
-                    "Direction":"Higher"
-                    },
-                "12M_Excess_Return_3Yr":{
-                    "Description":"12-Month Excess Price Return 3-Year Average",
-                    "Formula":"(EXCESS_RET_12M.0 + EXCESS_RET_12M.1 + EXCESS_RET_12M.2) / 3",
-                    "Rounding":"3",
-                    "Standardize":"Universe",
-                    "Direction":"Higher"
-                    },
-                "12M_Excess_Return_5Yr":{
-                    "Description":"12-Month Excess Price Return 5-Year Average",
-                    "Formula":"(EXCESS_RET_12M.0 + EXCESS_RET_12M.1 + EXCESS_RET_12M.2 + EXCESS_RET_12M.3 + EXCESS_RET_12M.4) / 5",
-                    "Rounding":"3",
-                    "Standardize":"Universe",
-                    "Direction":"Higher"
-                    }
+        "Momentum":{
+            "1M_Return":{
+                "Description":"1-Month Price Return to the Forward-Return Start (Calendar Quarter-End)",
+                "Formula":"(Price - Price_1M_Ago) / Price_1M_Ago * 100",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "3M_Return":{
+                "Description":"3-Month Price Return to the Forward-Return Start (Calendar Quarter-End)",
+                "Formula":"(Price - Price_3M_Ago) / Price_3M_Ago * 100",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "6M_Return":{
+                "Description":"6-Month Price Return",
+                "Formula":"(Price - Price_6M_Ago) / Price_6M_Ago * 100",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "12M_Return":{
+                "Description":"12-Month Price Return",
+                "Formula":"(Price - Price_12M_Ago) / Price_12M_Ago * 100",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "24M_Return":{
+                "Description":"24-Month Price Return",
+                "Formula":"(Price - Price_24M_Ago) / Price_24M_Ago * 100",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "SP_12M_Return.D":{
+                "Description":"SP500 12-Month Price Return",
+                "Formula":"(SP_Price - SP_12M_Ago) / SP_12M_Ago * 100",
+                "Rounding":"3",
+                "Standardize":"None",
+                "Direction":"None"
+                },
+            "12M_Excess_Return":{
+                "Description":"12-Month Excess Price Return",
+                "Formula":"EXCESS_RET_12M",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "12M_Excess_Return_3Yr":{
+                "Description":"12-Month Excess Price Return 3-Year Average",
+                "Formula":"(EXCESS_RET_12M.0 + EXCESS_RET_12M.1 + EXCESS_RET_12M.2) / 3",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                },
+            "12M_Excess_Return_5Yr":{
+                "Description":"12-Month Excess Price Return 5-Year Average",
+                "Formula":"(EXCESS_RET_12M.0 + EXCESS_RET_12M.1 + EXCESS_RET_12M.2 + EXCESS_RET_12M.3 + EXCESS_RET_12M.4) / 5",
+                "Rounding":"3",
+                "Standardize":"Universe",
+                "Direction":"Higher"
+                }
             },
         "Forward":{
             "Fwd_Return_1Yr.Y":{
