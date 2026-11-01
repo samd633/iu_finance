@@ -32,7 +32,7 @@ from combo_ic import CHOSEN_BY_SECTOR  # noqa: E402
 from fmp_call import API_KEY, FMP_BASE, _get_json  # noqa: E402
 from panel_prep import PanelPrep  # noqa: E402
 
-TOP_N = 10
+TOP_N = 20
 COMPLETE_SHARE = 0.9
 ROLE = "Top choice"
 
