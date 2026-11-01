@@ -30,5 +30,21 @@
                     "Medical - Pharmaceuticals"],
         "Tickers":{"DGX":"Services", "LH":"Services", "EVHC":"Services",
                    "TECH":"Tools_Diagnostics", "CTLT":"Tools_Diagnostics"}
+    },
+    // Consumer Cyclical: roughly the GICS Consumer Discretionary industry groups.
+    // Packaging makers are moved to Basic Materials by panel_prep.SECTOR_OVERRIDES.
+    // Online retailers (AMZN, EBAY, ETSY) stay in Retail and online travel
+    // (BKNG, EXPE, ABNB, TRIP) in Consumer_Services, as in GICS.
+    // Tickers: SIG (Signet) and TIF (Tiffany) are jewellery retailers; DASH
+    // (moved in from Communication Services) is a delivery marketplace.
+    "Consumer Cyclical":{
+        "Retail":["Specialty Retail", "Apparel - Retail", "Department Stores", "Home Improvement",
+                  "Auto - Dealerships"],
+        "Consumer_Services":["Travel Services", "Restaurants", "Gambling, Resorts & Casinos",
+                             "Travel Lodging", "Personal Products & Services"],
+        "Durables_Apparel":["Residential Construction", "Furnishings, Fixtures & Appliances", "Leisure",
+                            "Apparel - Manufacturers", "Apparel - Footwear & Accessories", "Luxury Goods"],
+        "Autos":["Auto - Parts", "Auto - Manufacturers"],
+        "Tickers":{"SIG":"Retail", "TIF":"Retail", "DASH":"Consumer_Services"}
     }
 }

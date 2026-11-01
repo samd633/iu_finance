@@ -149,6 +149,13 @@ add(B("Financial Services and Real Estate sectors: bank, insurer and REIT accoun
 if (C.excluded_tickers.length) add(B(`Tickers whose FMP sector looks wrong (\`panel_prep.EXCLUDED_TICKERS\`): ${C.excluded_tickers.join(", ")}.`));
 const moved = Object.keys(C.sector_overrides || {});
 if (moved.length) add(B(`Tickers moved into ${C.sector} from another FMP sector (\`panel_prep.SECTOR_OVERRIDES\`): ${moved.join(", ")}.`));
+const movedOut = Object.entries(C.sector_moved_out || {});
+if (movedOut.length) {
+  const bySector = {};
+  movedOut.forEach(([t, s]) => (bySector[s] = bySector[s] || []).push(t));
+  add(B(`Tickers FMP classes as ${C.sector} that are modelled with another sector (\`panel_prep.SECTOR_OVERRIDES\`): ` +
+    Object.entries(bySector).map(([s, ts]) => `${ts.join(", ")} (${s})`).join("; ") + "."));
+}
 add(B("Companies with several share classes keep the one with the higher average daily dollar volume."));
 add(H2("3.3 Calendarization (TTM)"));
 add(P(`Each company's fiscal quarter-end is snapped to the nearest calendar quarter-end (dropped if more than 45 days away), so all companies in a period share the same economic quarter. In the sample the median snap is ${ST.offset_med} days and the largest ${ST.offset_max}. Flow items (income statement, cash flow) are trailing-twelve-month sums; balance-sheet items are the quarter-end snapshot. \`FIELD.N\` in a formula means N years back (4N quarterly rows).`));
@@ -264,7 +271,8 @@ add(P("Models are ranked by Newey-West t-statistic on the selection window, whic
 add(H2("9.2 One metric per family"));
 add(P("A model is excluded if one category contains two metrics of the same family, because they would double-count one signal:"));
 add(B("horizons of one metric (ROE + ROE_3Yr);"));
-add(B("earnings and cash versions of one ratio (FCF_MGN + CFO_MGN; CFOPS_CAGR + FCFPS_CAGR), including all six payout ratios (Payout_Ratio and FCF_Payout_Ratio at 1, 3 and 5 years);"));
+add(B("earnings and cash versions of one ratio (FCF_MGN + CFO_MGN; CFOPS_CAGR + FCFPS_CAGR);"));
+add(B("**the payout family**: payout yield and the payout ratios (Payout_Ratio and FCF_Payout_Ratio) at every horizon. They all measure cash returned to shareholders, scaled by price or by earnings, so a model may hold at most one;"));
 add(B("**the investment family**: investment rate, capex intensity and total-asset growth at every horizon and in either direction. Pairing two of them in opposite directions (e.g. low investment rate with high asset growth) mostly hedged across market regimes rather than measuring anything coherent, so a model may hold at most one."));
 add(H2("9.3 Nested rule (penalty for extra metrics)"));
 add(P("AIC-type penalties don't apply because no parameters are estimated; the risk of overfitting comes from the number of models searched. A larger model is therefore only eligible if it beats **every** smaller model it contains (dropping one metric from a category with two) with a paired t above the threshold on the selection window."));
@@ -359,7 +367,7 @@ add(B("**IC is not portfolio return.** It ignores position sizing, turnover and 
 
 // ---------- 13 ----------
 add(H1("14. Reproducing the results"));
-const ENV = C.sectors.length === 1 && C.sectors[0] !== "Technology" ? `REPORT_SECTOR=${C.sectors[0]} ` : "";
+const ENV = C.sectors.length === 1 && C.sectors[0] !== "Technology" ? `REPORT_SECTOR=${C.sectors[0].includes(" ") ? `"${C.sectors[0]}"` : C.sectors[0]} ` : "";
 add(P(ENV ? `From the project root (bash; in PowerShell set $env:REPORT_SECTOR = "${C.sectors[0]}" first):` : "From the project root:"));
 add(EQ("python index_panel.py          # rebuild the panel (slow)"));
 add(EQ(`${ENV}python reports/factor_ic.py    # single-metric IC report`));

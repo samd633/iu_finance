@@ -38,7 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from combo_ic import (CHOSEN, END_PERIOD, ERAS, GAP_QUARTERS, NESTED_T, SECTORS, TRAIN_END,  # noqa: E402
                       WF_FIRST_TRAIN_END, WF_STEP, bonferroni_t, nw_t_rows, spearman_rows)
-from factor_ic import nw_t  # noqa: E402
+from factor_ic import SECTOR_SLUG, nw_t  # noqa: E402
 from metrics_cfg import load_metrics_cfg  # noqa: E402
 from panel_prep import PanelPrep  # noqa: E402
 
@@ -156,7 +156,7 @@ def main() -> None:
         quarterly[out.at[i, "addon"] + f" (w={out.at[i, 'weight']:g})"] = ic[1 + i]
 
     role_suffix = "" if BASE_ROLE == "Top choice" else "_" + BASE_ROLE.lower().replace(" ", "_")
-    dest = Path(__file__).resolve().parent / f"{'_'.join(SECTORS).lower()}_addon_ic_{END_PERIOD}{role_suffix}"
+    dest = Path(__file__).resolve().parent / f"{SECTOR_SLUG}_addon_ic_{END_PERIOD}{role_suffix}"
     dest.mkdir(exist_ok=True)
     out.round(4).to_csv(dest / "addon_summary.csv", index=False)
     pd.DataFrame([base_row]).round(4).to_csv(dest / "addon_base.csv", index=False)

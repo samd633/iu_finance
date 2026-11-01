@@ -1,0 +1,67 @@
+{
+  "prepared": "31 October 2026",
+  "coverage": [
+    "Consumer Cyclical has a median of 55 in-index companies per quarter (56 in 2011Q4–2015Q4, 59 in 2016–2020 and 50 from 2021), 81 companies in all. The four industry groups have a median of 18 companies per quarter in Retail, 16 in Consumer Services, 15 in Durables & Apparel and 7 in Autos (5 in 2011Q4), so group-ranked metrics such as the investment rate are coarse in Autos.",
+    "**Sector boundaries.** FMP's Consumer Cyclical sector includes eight packaging makers (Amcor, Avery Dennison, Ball, O-I Glass, Packaging Corp, Sealed Air, Smurfit Westrock and WestRock). GICS classes them as Materials, and they are moved to Basic Materials (panel_prep.SECTOR_OVERRIDES), leaving a sector of consumer businesses only. DoorDash (DASH), which FMP puts in Communication Services, is moved in; it joined the index in 2025 and adds three company-quarters.",
+    "**Industry groups.** Groups follow the GICS Consumer Discretionary industry groups: Retail (specialty, apparel and department stores, home improvement, car dealers), Consumer Services (travel, restaurants, casinos, hotels), Durables & Apparel (homebuilders, furnishings, toys, apparel and footwear brands, luxury goods) and Autos (makers and parts suppliers). Online retailers (Amazon, eBay, Etsy) stay in Retail and online travel (Booking, Expedia, Airbnb, TripAdvisor) in Consumer Services, as in GICS, rather than forming a separate online group of five or six companies. Signet and Tiffany (FMP: Luxury Goods) are placed in Retail by ticker, and DoorDash in Consumer Services.",
+    "**Concentration.** Amazon and Tesla make up about 60% of the sector's market value in 2025Q2. ICs weight every company equally, so this does not affect the results, but a cap-weighted portfolio built on the models would depend heavily on how the two are ranked."
+  ],
+  "holdout_comment": "The holdout picks made on 2011Q4–2020Q4 data mostly did badly in the test window. The leading training models were built on the 3-year payout ratio (Payout_Ratio_3Yr | Inv_Rate, training IC 0.099) and fell to about zero (−0.003); the 3-metric picks combining it with payout growth reached only 0.02–0.03. The exception is Payout_YLD | Inv_Rate, which scored 0.069. The top choice ranked 39th in training (adjusted t 0.43) but scored 0.141 on the test window, the highest of the leading models. This reflects a shift during the sample: the payout ratio predicted best in 2011–2015 and has weakened since, while payout yield has strengthened.",
+  "chosen_rationale": [
+    "**Payout yield as the anchor.** Payout yield (dividends plus net buybacks relative to market value) is the strongest single metric in the sector (IC 0.090, t 3.3) and is in every leading model. It measures both shareholder returns and valuation, and in this sector it has strengthened over time (IC 0.033 in 2011–2015, 0.072 in 2016–2020, 0.163 in 2021–2025).",
+    "**Low investment as a complement.** The investment rate (ranked within industry group, lower = better) predicted best early in the sample (0.087 in 2011–2015) and not at all from 2021 (−0.012), the opposite pattern to payout yield. Combined, the two give a steadier IC than either alone: the second choice beats the investment rate alone by +0.048 (paired t 2.07).",
+    "**Earnings growth.** The top choice adds 1-year EPS growth. It raised the full-sample IC from 0.098 to 0.117 (paired t 1.49) and the holdout IC from 0.069 to 0.141.",
+    "**Model size.** With payout yield and payout ratios kept apart (Section 9.2), walk-forward testing favoured 3-metric models (out-of-sample IC 0.091, t 2.2) narrowly over 2-metric models (0.068, t 2.1; paired t 0.97), and 4-metric models were clearly worse (0.038). One model of each of the two leading sizes is kept. Both are the highest-t eligible models of their size on the full sample, with adjusted t of 3.4 and 2.8.",
+    "**Payout yield and payout ratio not combined.** Before the payout family was added, walk-forward testing preferred 4-metric models that paired payout yield with the 3-year payout ratio (out-of-sample IC 0.113). The two measure the same thing (cash returned to shareholders, scaled by price or by earnings), and the payout ratio added only 0.002 IC to the top choice (paired t 0.19), so the pairing is now ruled out for every sector."
+  ],
+  "chosen_notes": [
+    "**Top vs second choice.** The top choice has the higher IC in every era from 2016 and a milder worst four-quarter stretch (−0.056 against −0.064), but its gain over the second choice is not significant (+0.019, paired t 1.49). The walk-forward 3-metric picks were also unstable: payout-ratio models were picked in folds 1–7 and the top choice only in folds 8–9.",
+    "**Against payout yield alone.** Neither model beats payout yield alone by a significant margin (top choice +0.028, paired t 1.64; second choice +0.009, paired t 0.35). They are kept because the investment rate covers the early years in which payout yield was weak, and because they do not depend on a single signal.",
+    "**Payout yield vs payout ratio.** With the same growth metrics, the 3-year payout ratio in place of payout yield gave a lower full-sample IC (0.093 against 0.117), a much lower holdout IC (0.053 against 0.141) and a worse four-quarter stretch (−0.132), and it has to be filled in for about 10% of company-quarters where 3-year earnings are not positive."
+  ],
+  "addon_notes": [
+    "**No add-on is kept for either model.** None of the 1,052 add-on models has a paired t above 1 for either base model, and every adjusted t is zero. Choosing an add-on fold by fold lowered out-of-sample IC by 0.037 for the top choice and 0.028 for the second choice (paired t −1.5 and −1.3).",
+    "**Value.** Valuation ratios as configured (cheap = better) hurt both models: at half weight they lower IC by 0.014 (top) and 0.010 (second) on average, and plain earnings yield changes it by −0.006 and +0.005. The best add-ons are reversed growth-adjusted ratios (expensive relative to 5-year growth = better), with gains of about +0.01 (paired t 0.8–0.9) that are positive in 2011–2015 and negative from 2021. Payout yield already carries the valuation signal the models can use.",
+    "**Momentum, including short-term reversal.** Every momentum metric is tested in both directions. No version helps: one-month momentum lowers IC by 0.002–0.016 and the reversed (short-term reversal) version by 0.009–0.035. Reversed 24-month returns, which appear in many of the fold-by-fold picks, give no gain on the full sample."
+  ],
+  "limitations": [
+    "**Weak single signals.** Only seven metrics have a t-stat above 2 on their own, and the best single metric in training (the investment rate) had a negative holdout IC. Results rely on the combination of signals that worked in different periods.",
+    "**Shifting signals.** Payout yield strengthened and the investment rate faded across the sample. If the investment rate does not recover, both models rely mainly on payout yield; if payout yield weakens, they have little else to fall back on.",
+    "**Filled earnings growth.** One-year EPS growth cannot be calculated for about 15% of company-quarters (loss in the current or prior year); those rows are placed in the bottom bucket when currently loss-making and in the middle bucket otherwise.",
+    "**Small groups and COVID.** Autos has a median of seven companies per quarter (Section 3.6). Every model size had a negative out-of-sample IC in the walk-forward fold covering 2019Q4–2020Q3, when travel, restaurants and casinos were hit hardest."
+  ],
+  "dev_log": [
+    [
+      "Methodology inherited from the Technology and Healthcare models (quarter-end returns from 2011Q4, walk-forward size choice, nested rule t > 0, Bonferroni-adjusted t, investment and payout families)",
+      "Same design, so results are comparable across sectors"
+    ],
+    [
+      "Packaging makers moved to Basic Materials and DoorDash moved in from Communication Services (panel_prep.SECTOR_OVERRIDES)",
+      "Match GICS: packaging is a materials business; DoorDash is a consumer marketplace"
+    ],
+    [
+      "Four Consumer Cyclical industry groups added (Retail, Consumer Services, Durables & Apparel, Autos), with SIG, TIF and DASH placed by ticker",
+      "Valuation, investment and leverage metrics are ranked within industry groups"
+    ],
+    [
+      "ROIC 3- and 5-year averages added to the metric set",
+      "Same horizons as ROE and ROA; available for every sector"
+    ],
+    [
+      "Payout yield and the payout ratios made one family (combo_ic.PAYOUT_FAMILY), so a model holds at most one",
+      "They measure the same thing; the first run's 4-metric leaders paired them"
+    ],
+    [
+      "Output folders use underscores for sectors with spaces (factor_ic.SECTOR_SLUG)",
+      "Consumer Cyclical folder names had a space"
+    ],
+    [
+      "Top and second choice recorded: Payout_YLD | EPS_Growth_1Yr + Inv_Rate and Payout_YLD | Inv_Rate",
+      "Selected after reviewing results; see Section 11"
+    ],
+    [
+      "Add-on test run on both chosen models",
+      "Check whether value or momentum adds to either model; none did, so both are unchanged"
+    ]
+  ]
+}

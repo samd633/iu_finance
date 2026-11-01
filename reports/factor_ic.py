@@ -30,6 +30,8 @@ from metrics_cfg import load_metrics_cfg  # noqa: E402
 from panel_prep import PanelPrep  # noqa: E402
 
 SECTORS = [os.environ.get("REPORT_SECTOR", "Technology")]
+# Output-folder prefix: "consumer_cyclical" for Consumer Cyclical.
+SECTOR_SLUG = "_".join(SECTORS).lower().replace(" ", "_")
 END_PERIOD = "2025Q2"
 NW_LAGS = 3
 SIG_T = 2.0
@@ -87,7 +89,7 @@ def main() -> None:
         "median_companies_per_quarter": per.size().median(), "buckets": prep.n_buckets, "target": y,
     }])
 
-    out = Path(__file__).resolve().parent / f"{'_'.join(SECTORS).lower()}_factor_ic_{END_PERIOD}"
+    out = Path(__file__).resolve().parent / f"{SECTOR_SLUG}_factor_ic_{END_PERIOD}"
     out.mkdir(exist_ok=True)
     summary.round(4).to_csv(out / "ic_summary.csv", index=False)
     pd.DataFrame(quarterly).round(4).to_csv(out / "ic_quarterly.csv", index=False)

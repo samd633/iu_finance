@@ -60,13 +60,19 @@ EXCLUDED_TICKERS = ("TWX",)
 # software and services) and XRX (Xerox, copiers/printers; GICS Technology
 # Hardware) join the Technology groups that match their businesses, as do
 # PAYX (Paychex, payroll/HR software; peer of ADP, already Technology) and TTD
-# (The Trade Desk, ad-buying software platform).
+# (The Trade Desk, ad-buying software platform). DASH (DoorDash, delivery
+# marketplace; GICS Consumer Discretionary) joins Consumer Cyclical's services
+# group. Packaging makers (FMP: Consumer Cyclical / Packaging & Containers)
+# move to Basic Materials, as in GICS.
 SECTOR_OVERRIDES = {
     **{ticker: ("Technology", "Internet Content & Information")
        for ticker in ("GOOGL", "META", "TWTR", "RDDT", "MTCH", "AABA")},
     **{ticker: ("Technology", "Software - Application") for ticker in ("PAYX", "TTD")},
     "CERN": ("Technology", "Information Technology Services"),
     "XRX": ("Technology", "Computer Hardware"),
+    "DASH": ("Consumer Cyclical", "Internet Content & Information"),
+    **{ticker: ("Basic Materials", "Packaging & Containers")
+       for ticker in ("AMCR", "AVY", "BALL", "OI", "PKG", "SEE", "SW", "WRK")},
 }
 
 

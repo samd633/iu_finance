@@ -34,7 +34,7 @@ import combo_ic  # noqa: E402
 from factor_ic import NW_LAGS  # noqa: E402
 from index_panel import START_PERIOD  # noqa: E402
 from metrics_cfg import load_metrics_cfg  # noqa: E402
-from panel_prep import EXCLUDED_TICKERS, INDUSTRY_GROUPS_FILE, SECTOR_OVERRIDES, TICKER_GROUPS_KEY, PanelPrep  # noqa: E402
+from panel_prep import EXCLUDED_TICKERS, INDUSTRY_GROUPS_FILE, PANEL_FILE, SECTOR_OVERRIDES, TICKER_GROUPS_KEY, PanelPrep  # noqa: E402
 
 
 def quarter_end(p: pd.Period) -> str:
@@ -86,7 +86,7 @@ def sample_stats(prep: PanelPrep, train_end: pd.Period, gap: int, eras: list) ->
 
 def main() -> None:
     sectors = combo_ic.SECTORS
-    slug = "_".join(sectors)
+    slug = "_".join(sectors).replace(" ", "_")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--notes", default=str(HERE / "notes" / f"{slug.lower()}.json"))
     ap.add_argument("--out", default=str(ROOT / "reports" / f"{slug}_Combo_Model_Methodology.docx"))
@@ -138,6 +138,9 @@ def main() -> None:
     def rows(name):
         return pd.read_csv(out_dir / name).replace({np.nan: None}).to_dict("records")
 
+    # Tickers FMP puts in the sector that SECTOR_OVERRIDES moves elsewhere.
+    fmp_sector = pd.read_csv(ROOT / PANEL_FILE, usecols=["Ticker", "Sector.D"]).drop_duplicates("Ticker").set_index("Ticker")["Sector.D"]
+    moved_out = {t: s for t, (s, _) in SECTOR_OVERRIDES.items() if s not in sectors and fmp_sector.get(t) in sectors}
     data = dict(
         stats=stats, metrics=metrics, reversed=reversed_, audit=audit.value_counts().to_dict(),
         other_metrics=other, addons=addons,
@@ -157,6 +160,7 @@ def main() -> None:
             investment_family=list(combo_ic.INVESTMENT_FAMILY), nw_lags=NW_LAGS,
             eras=[name for name, _ in combo_ic.ERAS], excluded_tickers=list(EXCLUDED_TICKERS),
             sector_overrides={t: s for t, (s, _) in SECTOR_OVERRIDES.items() if s in sectors},
+            sector_moved_out=moved_out,
             groups_text=groups_text(sectors), out_dir=out_dir.relative_to(ROOT).as_posix(),
             today=date.today().strftime("%d %B %Y").lstrip("0"),
         ),

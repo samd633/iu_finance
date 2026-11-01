@@ -16,8 +16,8 @@ they predicted in the other direction in Technology.
 
 Selection, on any window: rank by Newey-West t-stat, skipping combinations
 with two metrics of the same family in one category (e.g. ROE + ROE_3Yr,
-Payout_Ratio + FCF_Payout_Ratio, and any two investment metrics such as
-Inv_Rate_3Yr + ~Asset_G_Rate), and combinations
+Payout_Ratio + FCF_Payout_Ratio or Payout_YLD, and any two investment metrics
+such as Inv_Rate_3Yr + ~Asset_G_Rate), and combinations
 that don't beat every smaller model they contain (nested rule: paired
 Newey-West t of the quarterly IC difference above NESTED_T in that window).
 Raw t-stats are also shown Bonferroni-adjusted for the number of models of
@@ -49,7 +49,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from factor_ic import NW_LAGS, SECTORS, nw_t  # noqa: E402
+from factor_ic import NW_LAGS, SECTOR_SLUG, SECTORS, nw_t  # noqa: E402
 from metrics_cfg import load_metrics_cfg  # noqa: E402
 from panel_prep import PanelPrep  # noqa: E402
 
@@ -73,6 +73,10 @@ CHOSEN_BY_SECTOR = {
     "Healthcare": {  # 2026-10-29
         "Top choice": "ROIC + FCF_Payout_Ratio_3Yr | Asset_G_Rate_5Yr",
         "Second choice": "ROIC | Asset_G_Rate_5Yr",
+    },
+    "Consumer Cyclical": {  # 2026-10-31
+        "Top choice": "Payout_YLD | EPS_Growth_1Yr + Inv_Rate",
+        "Second choice": "Payout_YLD | Inv_Rate",
     },
 }
 CHOSEN = CHOSEN_BY_SECTOR.get(SECTORS[0], {})
@@ -105,13 +109,18 @@ def bonferroni_t(t: np.ndarray, m: np.ndarray) -> np.ndarray:
 
 # Metrics that all measure how fast a company invests; a model may hold only one of them.
 INVESTMENT_FAMILY = ("Inv_Rate", "CapX_Intensity", "Asset_G_Rate")
+# Metrics that all measure cash returned to shareholders (yield on price, or ratio
+# to earnings / free cash flow); a model may hold only one of them.
+PAYOUT_FAMILY = ("Payout_YLD", "Payout_Ratio")
 
 
 def family(m: str) -> str:
     """What a metric measures: drops the "~" flip, the horizon and an FCF/CFO prefix;
-    investment metrics share one family."""
+    investment metrics share one family, as do payout yields and payout ratios."""
     base = re.sub(r"^(FCF|CFO)(PS)?_|_(1|3|5)Yr$", "", m.lstrip("~"))
-    return "Investment" if base in INVESTMENT_FAMILY else base
+    if base in INVESTMENT_FAMILY:
+        return "Investment"
+    return "Payout" if base in PAYOUT_FAMILY else base
 
 
 def overlaps(s: tuple) -> bool:
@@ -359,7 +368,7 @@ def main() -> None:
     top_table = (out.head(TOP_TABLE).drop(columns=["full_ic", "full_t", "full_t_adj", "full_nested_ok"])
                  .replace({"overlap": yes_no, "contrast": yes_no, "nested_ok": yes_no}))
 
-    dest = Path(__file__).resolve().parent / f"{'_'.join(SECTORS).lower()}_combo_ic_{END_PERIOD}"
+    dest = Path(__file__).resolve().parent / f"{SECTOR_SLUG}_combo_ic_{END_PERIOD}"
     dest.mkdir(exist_ok=True)
     for f in dest.glob("*.csv"):
         f.unlink()  # outputs from older runs shouldn't linger

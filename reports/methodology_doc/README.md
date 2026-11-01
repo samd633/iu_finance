@@ -22,7 +22,7 @@ python reports/methodology_doc/make_doc.py
 ```
 
 For another sector, set `REPORT_SECTOR` for every step (bash:
-`REPORT_SECTOR=Healthcare python ...`). Section 12 covers each chosen model
+`REPORT_SECTOR=Healthcare python ...`; quote a name with a space, `REPORT_SECTOR="Consumer Cyclical"`). Section 12 covers each chosen model
 whose add-on test has been run (`ADDON_BASE_ROLE="Second choice"` for the
 second choice).
 
