@@ -63,7 +63,8 @@ EXCLUDED_TICKERS = ("TWX",)
 # (The Trade Desk, ad-buying software platform). DASH (DoorDash, delivery
 # marketplace; GICS Consumer Discretionary) joins Consumer Cyclical's services
 # group. Packaging makers (FMP: Consumer Cyclical / Packaging & Containers)
-# move to Basic Materials, as in GICS.
+# move to Basic Materials, as in GICS. Building-products makers and distributors
+# (FMP: Basic Materials / Construction Materials) move to Industrials.
 SECTOR_OVERRIDES = {
     **{ticker: ("Technology", "Internet Content & Information")
        for ticker in ("GOOGL", "META", "TWTR", "RDDT", "MTCH", "AABA")},
@@ -73,6 +74,7 @@ SECTOR_OVERRIDES = {
     "DASH": ("Consumer Cyclical", "Internet Content & Information"),
     **{ticker: ("Basic Materials", "Packaging & Containers")
        for ticker in ("AMCR", "AVY", "BALL", "OI", "PKG", "SEE", "SW", "WRK")},
+    **{ticker: ("Industrials", "Building Products") for ticker in ("JCI", "MAS", "FBIN", "BLDR")},
 }
 
 

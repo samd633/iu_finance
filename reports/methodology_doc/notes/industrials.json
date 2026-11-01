@@ -1,0 +1,55 @@
+{
+  "prepared": "31 October 2026",
+  "coverage": [
+    "Industrials has a median of 65 in-index companies per quarter (58 in 2011Q4–2015Q4, 65 in 2016–2020 and 68 from 2021), 90 companies in all. The four industry groups have a median of 31 companies per quarter in Capital Goods, 14 in Transportation, 11 in Aerospace & Defense and 7 in Business Services, so group-ranked metrics are coarse in Business Services.",
+    "**Sector boundaries.** FMP puts four building-products companies in Basic Materials / Construction Materials: Johnson Controls (JCI), Masco (MAS), Fortune Brands Innovations (FBIN) and Builders FirstSource (BLDR). GICS classes them as Industrials, and they are moved in (panel_prep.SECTOR_OVERRIDES) under a \"Building Products\" industry in Capital Goods. The aggregates producers Vulcan Materials and Martin Marietta stay in Basic Materials.",
+    "**Industry groups.** Groups follow the GICS Industrials industry groups (Capital Goods, Transportation, Commercial & Professional Services), with Aerospace & Defense split out of Capital Goods because defense contractors depend on government contracts. Capital Goods covers machinery, electrical equipment, engineering & construction, distributors, rental, tools, conglomerates, security and building products; Business Services covers Cintas, Copart, Rollins, waste, consulting and staffing."
+  ],
+  "holdout_comment": "Every holdout pick made on 2011Q4–2020Q4 data failed in the test window: the nine picks scored between −0.083 and +0.017, and the median test IC across all models was −0.080. The training leaders were built on payout yield, earnings growth and payout growth, and payout yield, which had a training IC of 0.123, scored −0.102 in the test window. Earnings and free-cash-flow yield reversed the same way. The cause is a regime change from 2021, when expensive, fast-growing companies (electrification and AI infrastructure) led the sector and 12-month excess return went from no signal to an IC of 0.12. Low total-asset growth was the only strong signal that held up (test IC 0.065–0.082). The top choice ranked 1,812th in training; it scored 0.064 on the test window (t 5.6), the best of the leading models but well below its training IC of 0.140.",
+  "chosen_rationale": [
+    "**Low asset growth as the anchor.** Slow total-asset growth (lower = better, as in Healthcare) is the strongest single metric in the sector (3-year IC 0.104, t 3.4) and the one strong signal that predicted in the same direction before and after 2021. Both chosen models use it.",
+    "**Margin and payout as complements.** The 5-year EBITDA margin predicts little on its own (IC 0.016) but improves asset growth: every full-sample finalist pairs the two. The top choice adds the 5-year FCF payout ratio, which beats the margin-and-growth core by +0.028 IC (paired t 2.11), and against the FCF payout ratio and asset growth without the margin by +0.019 (paired t 1.69).",
+    "**Statistically strong on the full sample.** Full-sample t-stats of 5.6 (top) and 5.9 (second), adjusted t of 3.5 for both. Each is the highest-t eligible model of its size.",
+    "**Model size.** Walk-forward testing gave 2- and 3-metric picks no out-of-sample IC (−0.025 and −0.003), because each fold picked models built on payout yield, and 4-metric picks 0.074 (t 2.8), with fold results from −0.09 to 0.21. Under the stricter nested rule (t > 2) 3-metric picks did best (0.050, t 3.9). The walk-forward results therefore do not show that the selection method works in this sector, and the chosen models rest on their full-sample results.",
+    "**Why the 3-metric model is the top choice.** It has the higher full-sample and holdout IC, the mildest worst four-quarter stretch (−0.011 against −0.033) and does not use payout yield, the signal that reversed. The 4-metric model is kept as second choice because walk-forward testing favoured its size under the nested rule in use, and it adds 1-year EPS growth, which predicted better after 2021."
+  ],
+  "chosen_notes": [
+    "**Top vs second choice.** The two are close on the full sample (second minus top −0.005, paired t −0.39) and moderately correlated by quarter (0.69). The top choice was stronger in 2011–2015 (0.202 against 0.172), the second in 2016–2020 (0.107 against 0.088), and both fell to about 0.07–0.08 in 2021–2025.",
+    "**Against asset growth alone.** Neither model beats 3-year asset growth alone by a significant margin (top +0.016, paired t 0.89; second +0.012, paired t 0.47). They are kept because they do not depend on a single signal.",
+    "**Lower confidence than other sectors.** Both models were picked with knowledge of the 2021–2025 reversal. Their 2021–2025 IC (0.08 and 0.07) is less than half their 2011–2015 level, and the out-of-sample tests above did not support the selection method here."
+  ],
+  "addon_notes": [
+    "**No add-on is kept for either model.** None of the 1,052 add-on models has a paired t above 2 for either base model, and every adjusted t is zero. Choosing an add-on fold by fold lowered out-of-sample IC by 0.012 for the top choice and 0.006 for the second (paired t −1.0 and −0.2); folds 2–5 picked earnings yield with 6-month momentum, and folds 7–9 earnings yield alone.",
+    "**Value with momentum.** The best add-on for the top choice is book-to-price with 3-year excess return at half weight: +0.024 IC (paired t 1.80), positive in every era (+0.022, +0.004, +0.049) and +0.064 on the holdout test window. Other value metrics paired with 3-year excess return behave similarly but smaller. Plain earnings yield adds +0.010 at half weight (paired t 1.18) but turned negative from 2021. On the second choice, which already holds payout yield, no value add-on as configured helps (average −0.017 at half weight).",
+    "**Momentum, including short-term reversal.** Every momentum metric is tested in both directions. One-month momentum lowers IC in both directions (−0.005 to −0.051), as do 12-month returns. Twelve-month excess return predicted well on its own from 2021 (IC 0.12), but added alone to either model it gives no gain on the full sample (+0.001 and −0.013 at half weight).",
+    "**Watch list.** Book-to-price with 3-year excess return at half weight on the top choice is the add-on to re-test as more quarters accumulate."
+  ],
+  "limitations": [
+    "**Regime change.** Payout yield and the valuation yields reversed after 2020 (Section 10.2). The chosen models avoid relying on them as far as the data allow, but they were chosen on a sample that includes the reversal; walk-forward testing did not show that the method would have found them in real time.",
+    "**One dominant signal.** Both models rely on low asset growth. Its IC fell from 0.12 in training to 0.07–0.08 in the test window; if it fades further, both models weaken together.",
+    "**Small groups.** Business Services has a median of seven companies per quarter (Section 3.6).",
+    "**Momentum not used.** Twelve-month excess return was among the strongest signals from 2021 but weak before; it is not part of the Quality + Growth models and as an add-on it did not help."
+  ],
+  "dev_log": [
+    [
+      "Methodology inherited from the earlier sectors (quarter-end returns from 2011Q4, walk-forward size choice, nested rule t > 0, Bonferroni-adjusted t, investment and payout families)",
+      "Same design, so results are comparable across sectors"
+    ],
+    [
+      "Building-products companies (JCI, MAS, FBIN, BLDR) moved in from Basic Materials (panel_prep.SECTOR_OVERRIDES)",
+      "Match GICS, which classes them as Industrials"
+    ],
+    [
+      "Four Industrials industry groups added (Aerospace & Defense, Capital Goods, Transportation, Business Services)",
+      "Valuation, investment and leverage metrics are ranked within industry groups"
+    ],
+    [
+      "Top and second choice recorded: EBITDA_MGN_5Yr + FCF_Payout_Ratio_5Yr | Asset_G_Rate_3Yr and EBITDA_MGN_5Yr + Payout_YLD_5Yr | EPS_Growth_1Yr + Asset_G_Rate",
+      "Selected after reviewing results; see Section 11"
+    ],
+    [
+      "Add-on test run on both chosen models",
+      "Check whether value or momentum adds to either model; none did robustly, so both are unchanged"
+    ]
+  ]
+}

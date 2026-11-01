@@ -78,6 +78,10 @@ CHOSEN_BY_SECTOR = {
         "Top choice": "Payout_YLD | EPS_Growth_1Yr + Inv_Rate",
         "Second choice": "Payout_YLD | Inv_Rate",
     },
+    "Industrials": {  # 2026-10-31
+        "Top choice": "EBITDA_MGN_5Yr + FCF_Payout_Ratio_5Yr | Asset_G_Rate_3Yr",
+        "Second choice": "EBITDA_MGN_5Yr + Payout_YLD_5Yr | EPS_Growth_1Yr + Asset_G_Rate",
+    },
 }
 CHOSEN = CHOSEN_BY_SECTOR.get(SECTORS[0], {})
 ERAS = [("2011Q4-2015Q4", "2015Q4"), ("2016Q1-2020Q4", "2020Q4"), ("2021Q1-2025Q2", END_PERIOD)]

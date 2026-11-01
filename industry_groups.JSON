@@ -46,5 +46,21 @@
                             "Apparel - Manufacturers", "Apparel - Footwear & Accessories", "Luxury Goods"],
         "Autos":["Auto - Parts", "Auto - Manufacturers"],
         "Tickers":{"SIG":"Retail", "TIF":"Retail", "DASH":"Consumer_Services"}
+    },
+    // Industrials: the GICS industry groups, with Aerospace & Defense split out of
+    // Capital Goods (defense contractors depend on government contracts).
+    // "Building Products" is not an FMP industry: JCI, MAS, FBIN and BLDR are moved
+    // in from Basic Materials under it by panel_prep.SECTOR_OVERRIDES.
+    "Industrials":{
+        "Aerospace_Defense":["Aerospace & Defense"],
+        "Capital_Goods":["Industrial - Machinery", "Agricultural - Machinery", "Electrical Equipment & Parts",
+                         "Engineering & Construction", "Industrial - Distribution", "Rental & Leasing Services",
+                         "Conglomerates", "Manufacturing - Tools & Accessories", "Manufacturing - Metal Fabrication",
+                         "Industrial - Pollution & Treatment Controls", "Security & Protection Services",
+                         "Building Products"],
+        "Transportation":["Integrated Freight & Logistics", "Railroads", "Airlines, Airports & Air Services",
+                          "Trucking"],
+        "Business_Services":["Specialty Business Services", "Waste Management", "Consulting Services",
+                             "Staffing & Employment Services"]
     }
 }
